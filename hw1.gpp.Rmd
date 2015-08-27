@@ -1,0 +1,136 @@
+---
+title: "Math 578B -- Fall 2015 -- Homework #1"
+author: "Peter Ralph"
+date: "due 1 September"
+---
+
+
+
+**1.** Let $X$ be a Markov chain on $\calA=\{0,1\}$
+with transition probabilities
+\begin{align}
+    \P\{ X_{t+1} = 1 \given X_t = 0 \} & = \alpha \\
+    \P\{ X_{t+1} = 1 \given X_t = 0 \} & = \beta .
+\end{align}
+
+a.  Show that if $X_0 = 0$ then the distribution of
+    \begin{align}
+        \tau := \min \{ n > 0 : X_n = 1 \} 
+    \end{align}
+    is geometric.
+
+b.  Find the spectral decomposition of the chain and use it to find an expression for
+    \begin{align}
+        \P\{ X_n = 1 \given X_0 = 0 \} .
+    \end{align}
+
+c.  What happens to the spectral expansion if $\alpha + \beta = 1$?  Explain.
+
+
+**2.** For the Markov chain in **(1)**, suppose we
+choose a random starting state with $\P\{ X_1 = 0 \} = \beta/(\alpha+\beta)$,
+and run it for $n$ steps, producing a string of $n$ digits,
+$X = X_1, \ldots, X_n$.
+Let $Y$ be the reversed string, i.e.,
+$Y_k = X_{n+1-k}$ for $1 \le k \le n$.
+
+a.  For a given string of digits $a_1, \ldots, a_n \in \{0,1\}^n$,
+what is $\P\{ Y_1 = a_1, \ldots, Y_n = a_n \}$?
+(Don't use the spectral decomposition.)
+
+b. Suppose we generate a string of length $n$ as in *(a)*
+but it is reversed with probability $1/2$:
+formally, let $\theta = H$ with probability 1/2 and $\theta=T$ otherwise,
+and define
+\begin{align}
+    Z = \begin{cases}
+    X \qquad &\text{if} \; \theta = H \\
+    Y \qquad &\text{otherwise} .
+    \end{cases}
+\end{align}
+A colleague has developed a procedure that guesses whether the string was reversed,
+i.e., a function $f : \{0,1\}^n \to \{H,T\}$ that is given $Z$ and guesses the value of $\theta$.
+Show that
+\begin{align}
+    \P\{ f(Z) = \theta \} = 1/2 .
+\end{align}
+
+
+**3.** Let $X_n$ be the simplified "polymerase complex assembly" Markov chain defined in class,
+with transition matrix (where "$\dagger$" means transcription):
+\begin{align}
+P = 
+\begin{array}{c c}  
+&
+\begin{array}{c c c c c c} 
+    \varnothing & \alpha & \beta & \alpha+\beta & \text{pol} & \dagger \\ 
+\end{array}
+\\
+\begin{array} {c c}
+    \varnothing \\ \alpha \\ \beta \\ \alpha+\beta \\ \text{pol} \\ \dagger 
+\end{array}
+&
+\left[
+\begin{array}{c c c c c c}
+    * & k_\alpha & k_\beta & 0 & 0 & 0 \\
+    k_\alpha & * & 0 & k_\beta &0 & 0 \\
+    k_\beta & 0 & * & k_\alpha & 0 & 0 \\
+    0 & k_\beta & k_\alpha & * & k_\text{pol} & 0 \\
+    0 & 0 & 0 & 0 & * & 1 \\
+    0 & 0 & 0 & 1 & 0 & * 
+\end{array}
+\right]
+\end{array}
+\end{align}
+Here the "$*$"s on the diagonal are set so that rows sum to 1.
+Let
+\begin{align}
+    \tau = \min\{ n \ge 0 : X_n = \dagger \} .
+\end{align}
+
+a.  Set $k_\alpha = k_\beta = 0.2$ and $k_\text{pol}=0.5$,
+    and compute numerically $\E[\tau]$ for all starting states.
+    (And, explain how you do it!)
+
+    \ifdef{SOLUTIONS}
+    ```{r setup}
+    ka <- kb <- 0.2
+    kpol <- 0.5
+    M <- matrix( c(
+        0, ka, kb, 0, 0, 0,
+        ka, 0, 0, kb, 0, 0,
+        kb, 0, 0, ka, 0, 0,
+        0, kb, ka, 0, kpol, 0,
+        0, 0, 0, 0, 0, 1,
+        0, 0, 0, 1, 0, 0
+        ), byrow=TRUE, nrow=6 )
+    diag(M) <- 1-rowSums(M)
+    ```
+
+    Now, since $\E^a[\tau] = h$ solves $(I-Q)^{-1}1$ where Q is
+    ```{r Q}
+    pander::pander(M[1:5,1:5])
+    ```
+    the solution is
+    ```{r h}
+    h <- solve( diag(5) - M[1:5,1:5], rep(1,5) )
+    pander::pander(h)
+    ```
+    \endif
+
+b.  Compute numerically the stationary distribution.
+    What is the long-term average rate of transcription
+    (i.e., mean number of visits to $\dagger$ per unit time)?
+
+    \ifdef{SOLUTIONS}
+    The stationary distribution $\pi$ is the first left eigenvector of $P$:
+    ```{r stationary}
+    pivec <- eigen(t(M))$vectors[,1]
+    pivec <- Re( zapsmall(pivec)/sum(pivec) )
+    ```
+    and the mean time between visits to $\dagger$ is `r 1/pivec[6]`.
+    \endif
+
+c.  Verify your computations in *(a)* and *(b)*
+    using a simulation of the chain.
+
