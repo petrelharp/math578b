@@ -4,13 +4,18 @@ author: "Peter Ralph"
 date: "due 1 September"
 ---
 
+\newcommand{\calA}{\mathcal{A}}
+\renewcommand{\P}{\mathbb{P}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\given}{\mid}
+
 
 
 **1.** Let $X$ be a Markov chain on $\calA=\{0,1\}$
 with transition probabilities
 \begin{align}
     \P\{ X_{t+1} = 1 \given X_t = 0 \} & = \alpha \\
-    \P\{ X_{t+1} = 1 \given X_t = 0 \} & = \beta .
+    \P\{ X_{t+1} = 0 \given X_t = 1 \} & = \beta .
 \end{align}
 
 a.  Show that if $X_0 = 0$ then the distribution of
