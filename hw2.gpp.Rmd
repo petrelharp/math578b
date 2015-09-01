@@ -1,0 +1,141 @@
+---
+title: "Math 578B -- Fall 2015 -- Homework #2"
+author: "Peter Ralph"
+date: "due 8 September"
+---
+
+\newcommand{\calA}{\mathcal{A}}
+\renewcommand{\P}{\mathbb{P}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\given}{\mid}
+\newcommand{\oneb}{\mathbf{1}}
+
+<!-- wrap solutions in \ifdef{SOLUTIONS} ... \endif -->
+
+
+**1.** Let $X_n$ be the simplified "polymerase complex assembly" Markov chain defined in class,
+with transition matrix (where "$\dagger$" means transcription):
+\begin{align}
+P = 
+\begin{array}{c c}  
+&
+\begin{array}{c c c c c c} 
+    \varnothing & \alpha & \beta & \alpha+\beta & \text{pol} & \dagger \\ 
+\end{array}
+\\
+\begin{array} {c c}
+    \varnothing \\ \alpha \\ \beta \\ \alpha+\beta \\ \text{pol} \\ \dagger 
+\end{array}
+&
+\left[
+\begin{array}{c c c c c c}
+    * & k_\alpha & k_\beta & 0 & 0 & 0 \\
+    k_\alpha & * & 0 & k_\beta &0 & 0 \\
+    k_\beta & 0 & * & k_\alpha & 0 & 0 \\
+    0 & k_\beta & k_\alpha & * & k_\text{pol} & 0 \\
+    0 & 0 & 0 & 0 & * & 1 \\
+    0 & 0 & 0 & 1 & 0 & * 
+\end{array}
+\right]
+\end{array}
+\end{align}
+Here the "$*$"s on the diagonal are set so that rows sum to 1.
+For each state $a$, define
+the first *hitting* and *return* times
+\begin{align*}
+    \tau_a &= \min\{ n \ge 0 : X_n = \dagger \} \\
+    \tau^+_a &= \min\{ n \ge 1 : X_n = \dagger \} .
+\end{align*}
+
+a.  Since the factors $\alpha$ and $\beta$ can stay on the DNA,
+    there may be more than one transcript per "burst".
+    Let $N$ denote the number of transcripts before the next complete disassembly,
+    i.e.
+    \begin{align*}
+        N &= \sum_{k=0}^{\tau_\varnothing} \oneb_{X_k = \dagger} .
+    \end{align*}
+    Find the set of linear equations solved by
+    \begin{align*}
+        u(a) = \E[ N \given X_0 = a ] .
+    \end{align*}
+
+\ifdef{SOLUTIONS}
+    First, $u(\varnothing)=0$.
+    For $a \neq \dagger$,
+    \begin{align*}
+        u(a) = \sum_b P_{ab} u(b) ,
+    \end{align*}
+    and finally,
+    \begin{align*}
+        u(\dagger) = 1 + \sum_b P_{\dagger b} u(b) .
+    \end{align*}
+\endif
+
+b.  Set $k_\alpha = k_\beta = 0.2$ and $k_\text{pol}=0.5$,
+    and compute numerically $u(a)$ for each $a$.
+
+    \ifdef{SOLUTIONS}
+    ```{r setup}
+    ka <- kb <- 0.2
+    kpol <- 0.5
+    M <- matrix( c(
+        0, ka, kb, 0, 0, 0,
+        ka, 0, 0, kb, 0, 0,
+        kb, 0, 0, ka, 0, 0,
+        0, kb, ka, 0, kpol, 0,
+        0, 0, 0, 0, 0, 1,
+        0, 0, 0, 1, 0, 0
+        ), byrow=TRUE, nrow=6 )
+    diag(M) <- 1-rowSums(M)
+    ```
+
+    Now, since $u$ solves $(I-Q)^{-1}\delta_\dagger$ where Q is
+    ```{r Q}
+    pander::pander(M[2:6,2:6])
+    ```
+    the solution is
+    ```{r h}
+    h <- solve( diag(5) - M[2:6,2:6], c(rep(0,4),1) )
+    pander::pander(h)
+    ```
+    \endif
+
+c.  Verify your answer by simulation.
+
+
+**2.** Let $X$ be a Markov chain on $k$-subsets of $[n]:=\{1,2,\ldots,n\}$, 
+    for some fixed $k \le n/2$, defined as follows:
+    Suppose the chain is in state $X_t=A$.
+    With probability $1/2$, do nothing, so $X_{t+1}=A$.
+    Otherwise, pick an element $a \in A$ uniformly at random,
+    and another $b \in [n] \setminus A$ uniformly at random,
+    and let $X_{t+1} = (A \cup \{b\}) \setminus \{a\}$.
+    Show that the unique stationary distribution of $X$ is uniform.
+    (And, say why the "do nothing" step is necessary!)
+
+
+**3.** *(soft TSP)*
+    Suppose we have a distance matrix $D$ with pairwise distances between each of $n$ points,
+    so that $D_{ij} = D_{ji}$ is the distance between point $i$ and point $j$.
+    The *length* of a given ordering of points $\sigma : \{1,\ldots,n\} \to \{1,\ldots,n\}$
+    is
+    \begin{align*}
+        L(\sigma) = \sum_{i=1}^{n-1} D_{\sigma(i),\sigma(i+1)\}
+    \end{align*}
+    and for a given value of the *temperature* $T > 0$, define
+    \begin{align*}
+        \pi_T(\sigma) = \exp\left( - L(\sigma) / T \right) .
+    \end{align*}
+    Write (and, explain) computer code to do the following.
+
+a.  Sample $n=20$ points uniformly from the unit square $[0,1]^2$,
+    and compute $D$ for this configuration.
+    Use this $D$ in subsequent problems.
+    
+b.  Implement the Metropolis algorithm to sample from $\pi_T$
+    using the proposal distribution from class:
+    pick $j<k$ uniformly at random, and reverse the order of $\sigma(j), \ldots, \sigma(k)$.
+    Use this to make histograms of the distribution of $L(\sigma)$, where $\sigma \sim \pi_T$,
+    for $T=1$ and $T=10$.
+    
+c.  Also, estimate $\P\{ \sigma(1) = i \}$ for $T=1$ and $T=10$.
