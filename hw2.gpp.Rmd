@@ -2,6 +2,8 @@
 title: "Math 578B -- Fall 2015 -- Homework #2"
 author: "Peter Ralph"
 date: "due 8 September"
+header-includes:
+    - \usepackage{fullpage}
 ---
 
 \newcommand{\calA}{\mathcal{A}}
@@ -9,8 +11,14 @@ date: "due 8 September"
 \newcommand{\E}{\mathbb{E}}
 \newcommand{\given}{\mid}
 \newcommand{\oneb}{\mathbf{1}}
+\newcommand{\cor}{\text{cor}\,}
 
 <!-- wrap solutions in \ifdef{SOLUTIONS} ... \endif -->
+
+```{r knit_setup, include=FALSE}
+fig.dim <- 5
+knitr::opts_chunk$set(fig.height=fig.dim,fig.width=2*fig.dim,fig.align='center')
+```
 
 
 **1.** Let $X_n$ be the simplified "polymerase complex assembly" Markov chain defined in class,
@@ -41,10 +49,9 @@ P =
 \end{align}
 Here the "$*$"s on the diagonal are set so that rows sum to 1.
 For each state $a$, define
-the first *hitting* and *return* times
+the first *hitting* times
 \begin{align*}
-    \tau_a &= \min\{ n \ge 0 : X_n = \dagger \} \\
-    \tau^+_a &= \min\{ n \ge 1 : X_n = \dagger \} .
+    \tau_a &= \min\{ n \ge 0 : X_n = a \} 
 \end{align*}
 
 a.  Since the factors $\alpha$ and $\beta$ can stay on the DNA,
@@ -102,8 +109,23 @@ b.  Set $k_\alpha = k_\beta = 0.2$ and $k_\text{pol}=0.5$,
 
 c.  Verify your answer by simulation.
 
+**2.** Suppose that $X$ is a Markov chain on a state space $\calA$,
+    and that $\varnothing$ and $\dagger$ are two distinct sets of states in $\calA$.
+    Define
+    $$
+    \begin{aligned}
+    h(a) = \P^a\{ \tau_\varnothing < \tau_\dagger \} ,
+    \end{aligned}
+    $$
+    Show that
+    $$\begin{aligned}
+    \P\{ X_{n+1} = b \given X_n = a \, \text{and} \, \tau_\varnothing < \tau_\dagger \}
+    =
+    \frac{h(b)}{h(a)}P_{ab} .
+    \end{aligned}$$
 
-**2.** Let $X$ be a Markov chain on $k$-subsets of $[n]:=\{1,2,\ldots,n\}$, 
+
+**3.** Let $X$ be a Markov chain on $k$-subsets of $[n]:=\{1,2,\ldots,n\}$, 
     for some fixed $k \le n/2$, defined as follows:
     Suppose the chain is in state $X_t=A$.
     With probability $1/2$, do nothing, so $X_{t+1}=A$.
@@ -114,28 +136,141 @@ c.  Verify your answer by simulation.
     (And, say why the "do nothing" step is necessary!)
 
 
-**3.** *(soft TSP)*
+**4.** *(soft TSP)*
     Suppose we have a distance matrix $D$ with pairwise distances between each of $n$ points,
     so that $D_{ij} = D_{ji}$ is the distance between point $i$ and point $j$.
     The *length* of a given ordering of points $\sigma : \{1,\ldots,n\} \to \{1,\ldots,n\}$
     is
     \begin{align*}
-        L(\sigma) = \sum_{i=1}^{n-1} D_{\sigma(i),\sigma(i+1)\}
+        L(\sigma) = \sum_{i=1}^{n-1} D_{\sigma(i),\sigma(i+1)} .
     \end{align*}
-    and for a given value of the *temperature* $T > 0$, define
+    Note that this is not a *tour*, i.e., it doesn't loop back to the start.
+    For a given value of the *temperature* $T > 0$, define
     \begin{align*}
         \pi_T(\sigma) = \exp\left( - L(\sigma) / T \right) .
     \end{align*}
     Write (and, explain) computer code to do the following.
 
-a.  Sample $n=20$ points uniformly from the unit square $[0,1]^2$,
+a.  Sample $n=100$ points uniformly from the unit square $[0,1]^2$,
     and compute $D$ for this configuration.
     Use this $D$ in subsequent problems.
+
+\ifdef{SOLUTIONS}
+```{r tsp_D}
+npts <- 100
+xy <- data.frame( x=runif(npts), y=runif(npts) )
+D <- sqrt( outer(xy$x,xy$x,"-")^2 + outer(xy$y,xy$y,"-")^2 )
+```
+\endif
+
     
 b.  Implement the Metropolis algorithm to sample from $\pi_T$
     using the proposal distribution from class:
     pick $j<k$ uniformly at random, and reverse the order of $\sigma(j), \ldots, \sigma(k)$.
-    Use this to make histograms of the distribution of $L(\sigma)$, where $\sigma \sim \pi_T$,
-    for $T=1$ and $T=10$.
+    For $T=10$ and $T=0.05$ show a histogram of the distribution of $L(\sigma)$,
+    where $\sigma \sim \pi_T$,
+    and pictures of a few representative paths.
+    Make sure to say what aspects of the output convince you that your algorithm is working.
     
-c.  Also, estimate $\P\{ \sigma(1) = i \}$ for $T=1$ and $T=10$.
+
+\ifdef{SOLUTIONS}
+
+Here is the set-up:
+```{r tsp_metrop}
+L <- function (sigma) {
+    sum( D[ cbind( sigma[-length(sigma)], sigma[-1] ) ] )
+}
+
+propose <- function(sigma) {
+    jk <- sort(sample(seq_along(sigma),2))
+    sigma[jk[1]:jk[2]] <- rev(sigma[jk[1]:jk[2]])
+    return( sigma )
+}
+
+metrop_step <- function (sigma,T,L0=L(sigma)) {
+    new.sigma <- propose(sigma)
+    L1 <- L(new.sigma)
+    if (runif(1) < min(1,exp(-(L1-L0)/T))) {
+        return(new.sigma)
+    } else {
+        return(sigma)
+    }
+}
+```
+
+Now, run the MCMCs:
+```{r runs, cache=TRUE}
+run_metrop <- function (Tval,nsteps) {
+    sigma.mat <- matrix(NA,nrow=nsteps,ncol=npts)
+    Lvec <- numeric(nsteps)
+    sigma.mat[1,] <- sample(npts)  # random initial start
+    Lvec[1] <- L(sigma.mat[1,])
+    for (k in 2:nsteps) {
+        sigma.mat[k,] <- metrop_step(sigma.mat[k-1,],T=Tval,L0=Lvec[k-1])
+        Lvec[k] <- L(sigma.mat[k,])
+    }
+    return( list( sigma.mat=sigma.mat, Lvec=Lvec ) )
+}
+Tvals <- c(0.05,10)
+runs <- lapply( Tvals, run_metrop, nsteps=1e5 )
+```
+
+
+First, plot $T=`r Tvals[1]`$:
+```{r T1}
+with( list2env(runs[[1]]), {
+    plot(Lvec,ylab="length",xlab="step")
+    # looks stable by 5000
+    layout(matrix(1:9,nrow=3))
+    for (k in seq(1,nrow(sigma.mat),length.out=10)[-1]) {
+        plot( xy$x[sigma.mat[k,]], xy$y[sigma.mat[k,]], type='l', 
+             xlim=c(0,1), ylim=c(0,1), asp=1, xlab='', ylab='' )
+    }
+    layout(1)
+    hist(Lvec[(nrow(sigma.mat)/2):nrow(sigma.mat)],main=paste("T=",Tvals[1]))
+} )
+```
+
+Now, plot $T=`r Tvals[2]`$:
+```{r T2}
+with( list2env(runs[[2]]), {
+    plot(Lvec,ylab="length",xlab="step")
+    # looks stable by 5000
+    layout(matrix(1:9,nrow=3))
+    for (k in seq(1,nrow(sigma.mat),length.out=10)[-1]) {
+        plot( xy$x[sigma.mat[k,]], xy$y[sigma.mat[k,]], type='l', 
+             xlim=c(0,1), ylim=c(0,1), asp=1, xlab='', ylab='' )
+    }
+    layout(1)
+    hist(Lvec[(nrow(sigma.mat)/2):nrow(sigma.mat)],main=paste("T=",Tvals[2]))
+} )
+```
+
+\endif
+
+
+c.  For each of the Markov chains at $T=10$ and $T=0.05$,
+    estimate $\cor[L(X_t),L(X_{t+n})]$ for a range of relevant $n$
+    (large enough $n$ that they become uncorrelated).
+    Plot, and explain the differences between the two chains you see.
+
+\ifdef{SOLUTIONS}
+```{r plot_acf}
+acf(runs[[1]]$Lvec,lag.max=length(runs[[1]]$Lvec),main=Tvals[1])
+acf(runs[[2]]$Lvec,lag.max=length(runs[[2]]$Lvec),main=Tvals[2])
+```
+\endif
+
+<!--
+c.  Also, estimate and visualize $\P\{ \sigma(1) = i \}$ for $T=0.05$.
+
+\ifdef{SOLUTIONS}
+```{r start_prob}
+start.probs <- sapply( lapply(runs,list2env), with, {x<-colSums(sigma.mat[seq(floor(nrow(sigma.mat)/2),length.out=floor(nrow(sigma.mat)/2)),]);x/sum(x)} )
+next.probs <- sapply( lapply(runs,list2env), with, 
+                     { ones <- (sigma.mat==1);
+                     tabulate( sigma.mat[cbind(row(sigma.mat)[ones],1+(col(sigma.mat)%%ncol(sigma.mat)))] ) } )
+next.probs <- next.probs/colSums(next.probs)[col(next.probs)]
+```
+\endif
+-->
