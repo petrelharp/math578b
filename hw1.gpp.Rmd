@@ -1,0 +1,393 @@
+---
+title: "Math 578B -- Fall 2015 -- Homework #1"
+author: "Peter Ralph"
+date: "due 1 September"
+---
+
+\newcommand{\calA}{\mathcal{A}}
+\renewcommand{\P}{\mathbb{P}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\given}{\mid}
+\newcommand{\st}{\,:\,}
+
+
+
+**1.** Let $X$ be a Markov chain on $\calA=\{0,1\}$
+with transition probabilities
+\begin{align}
+    \P\{ X_{t+1} = 1 \given X_t = 0 \} & = \alpha \\
+    \P\{ X_{t+1} = 0 \given X_t = 1 \} & = \beta .
+\end{align}
+
+a.  Show that if $X_0 = 0$ then the distribution of
+    \begin{align}
+        \tau := \min \{ n > 0 : X_n = 1 \} 
+    \end{align}
+    is geometric.
+
+    \ifdef{SOLUTIONS}
+    **Solution:**
+    \it
+
+    By the Markov property,
+    and since $X_0=0$,
+    \begin{align*}
+        \P\{ \tau > n \} 
+        &= \P\{ X_0 = X_1 = X_2 = X_3 = \cdots = X_n = 0 \} \\
+        &= \P\{ X_0 = 0 \} \P\{ X_1 = 0 \given X_0 = 0 \} \cdots \P\{ X_n = 0 \given X_{n-1} = 0 \}  \\
+        &= (1-\alpha)^n .
+    \end{align*}
+    This is the expression for the geometric distribution.
+
+    \normalfont
+    \endif
+
+b.  Find the spectral decomposition of the chain and use it to find an expression for
+    \begin{align}
+        \P\{ X_n = 1 \given X_0 = 0 \} .
+    \end{align}
+
+    \ifdef{SOLUTIONS}
+    **Solution:**
+    \it
+    We know that one eigenvalue is $\lambda_1=1$;
+    since $\text{tr}P = 2-\alpha-beta$, the other must be $\lambda_2=1-\alpha-\beta$.
+
+    A spectral decomposition for the chain is
+    \begin{align*}
+    P^n
+    &=
+    \left[
+    \begin{array}{cc}
+    1-\alpha & \alpha \\
+    \beta & 1-\beta \\
+    \end{array}
+    \right]^n \\
+    &=
+    \left[
+    \begin{array}{cc}
+    1 & -\alpha/(\alpha+\beta) \\
+    1 & \beta/(\alpha+\beta) \\
+    \end{array}
+    \right] 
+    \left[
+    \begin{array}{cc}
+    1 & 0 \\
+    0 & (1-\alpha-\beta)^n \\
+    \end{array}
+    \right] 
+    \left[
+    \begin{array}{cc}
+    \beta/(\alpha+\beta) & \alpha/(\alpha+\beta) \\
+    -1 & 1 \\
+    \end{array}
+    \right] \\
+    \end{align*}
+
+    Using this,
+    \begin{align*}
+        \P\{ X_n = 1 \given X_0 = 0 \} 
+        &=
+        (P^n)_{01} \\
+        &= \frac{\alpha}{\alpha+\beta} (1-(1-\alpha-\beta)^n) 
+    \end{align*}
+
+    \normalfont
+    \endif
+
+
+c.  What happens to the spectral expansion if $\alpha + \beta = 1$?  Explain.
+
+
+    \ifdef{SOLUTIONS}
+    **Solution:**
+    \it
+    Note in the previous answer
+    that the transition probability converges geometrically to the stationary distribution,
+    $\alpha/(\alpha+\beta)$,
+    with a rate that depends on $\lambda_2=(1-\alpha-\beta)$.
+    But, if $\lambda_2=0$,
+    the chain reaches stationarity immediately:
+    \begin{align*}
+        \P\{ X_n = 1 \given X_0 = 0 \} 
+        &= \frac{\alpha}{\alpha+\beta} .
+    \end{align*}
+    If $\alpha+\beta=1$, then 
+    \begin{align*}
+    P
+    &=
+    \left[
+    \begin{array}{cc}
+    1-\alpha & \alpha \\
+    1-\alpha & \alpha \\
+    \end{array}
+    \right] ,
+    \end{align*}
+    -- in other words, 
+    the distribution of the next state doesn't depend on the current state
+    -- the Markov chain is really just a sequence of iid random variables.
+
+    \normalfont
+    \endif
+
+
+**2.** For the Markov chain in **(1)**, suppose we
+choose a random starting state with $\P\{ X_1 = 0 \} = \beta/(\alpha+\beta)$,
+and run it for $n$ steps, producing a string of $n$ digits,
+$X = X_1, \ldots, X_n$.
+Let $Y$ be the reversed string, i.e.,
+$Y_k = X_{n+1-k}$ for $1 \le k \le n$.
+
+a.  For a given string of digits $a_1, \ldots, a_n \in \{0,1\}^n$,
+what is 
+$\P\{ Y_1 = a_1, \ldots, Y_n = a_n \}$?
+(Don't use the spectral decomposition.)
+
+    \ifdef{SOLUTIONS}
+    **Solution:**
+    \it
+    Count the transitions:
+    \begin{align*}
+    n_{00}(a) &= \#\{ 1 \le k \le n-1 \st a_k=0 \,\&\, a_{k+1}=0 \} \\
+    n_{01}(a) &= \#\{ 1 \le k \le n-1 \st a_k=0 \,\&\, a_{k+1}=1 \} \\
+    n_{10}(a) &= \#\{ 1 \le k \le n-1 \st a_k=1 \,\&\, a_{k+1}=0 \} \\
+    n_{11}(a) &= \#\{ 1 \le k \le n-1 \st a_k=1 \,\&\, a_{k+1}=1 \} .
+    \end{align*}
+    By the Markov property,
+    and then the defintion of $X$,
+    \begin{align*}
+        \P\{ Y_1 = a_1, \ldots, Y_n = a_n \}
+        &=
+        \P\{ X_1 = a_n, \ldots, X_n = a_1 \} \\
+        &=
+        \P\{ X_1 = a_n \}
+        \prod_{k=1}^{n-1} 
+        \P\{ X_{k+1} = a_{n-k} \given X_k=a_{n-k+1} \} \\
+        &=
+        \frac{\alpha^{1-a_n}+\beta^{a_n}}{\alpha+\beta}
+        (1-\alpha)^{n_{00}(a)}
+        \alpha^{n_{10}(a)}
+        (1-\beta)^{n_{11}(a)}
+        \beta^{n_{01}(a)} \\
+        &=
+        \frac{1}{\alpha+\beta}
+        (1-\alpha)^{n_{00}(a)}
+        \alpha^{n_{10}(a)+\delta_0(a_n)}
+        (1-\beta)^{n_{11}(a)+\delta_1(a_n)}
+        \beta^{n_{01}(a)}  ,
+    \end{align*}
+    where $\delta_0(a_n)=1$ if $a_n=0$ and $\delta_0(a_n)=0$  otherwise.
+
+
+    \normalfont
+    \endif
+
+b. Suppose we generate a string of length $n$ as in *(a)*
+but it is reversed with probability $1/2$:
+formally, let $\theta = H$ with probability 1/2 and $\theta=T$ otherwise,
+and define
+\begin{align}
+    Z = \begin{cases}
+    X \qquad &\text{if} \; \theta = H \\
+    Y \qquad &\text{otherwise} .
+    \end{cases}
+\end{align}
+A colleague has developed a procedure that guesses whether the string was reversed,
+i.e., a function $f : \{0,1\}^n \to \{H,T\}$ that is given $Z$ and guesses the value of $\theta$.
+Show that
+\begin{align}
+    \P\{ f(Z) = \theta \} = 1/2 .
+\end{align}
+
+    \ifdef{SOLUTIONS}
+    **Solution:**
+    \it
+    We know from the first problem
+    that the stationary distribution is $\pi_0=\beta/(\alpha+\beta)$;
+    and since $\pi_0P_{01}=\alpha\beta/(\alpha+\beta)=\pi_1P_{10}$,
+    the chain is reversible,
+    and since $X_1 \sim \pi$, we know $Y$ has the same distribution as $X$.
+    But, part of the point of this problem is to *prove* this.
+    It's easy to check that
+    \begin{align*}
+        \P\{ X_1 = a_1, \ldots, X_n = a_n \}
+        &=
+        \frac{1}{\alpha+\beta}
+        (1-\alpha)^{n_{00}(a)}
+        \alpha^{n_{01}(a)+\delta_0(a_1)}
+        (1-\beta)^{n_{11}(a)+\delta_1(a_1)}
+        \beta^{n_{10}(a)}  .
+    \end{align*}
+    However: notice that $n_{01}(a)+\delta_0(a_1)=n_{10}(a)+\delta_0(a_n)$,
+    and $n_{10}(a)+\delta_1(a_1)=n_{01}(a)+\delta_1(a_n)$,
+    and so $\P\{ X=a \} = \P\{ Y=a \}$.
+
+    So, we know that $X$ and $Y$ have the same distribution;
+    so how could we possibly infer what $\theta$ is?
+    We still need to make the intuition formal:
+    since on $\{\theta=H\}$, $Z=X$, and on $\{\theta=T\}$, $Z=Y$,
+    we know that 
+    $f(Z)\given\theta=H$ and 
+    $f(Z)\given\theta=T$
+    have the same distribution;
+    therefore,
+    $\P\{f(Z)=H\given\theta=H\}=\P\{f(Z)=H\given\theta=T\}$.
+    Since
+    $\P\{f(Z)=H\given\theta=H\}
+    +\P\{f(Z)=T\given\theta=H\}=1$,
+    \begin{align*}
+        \P\{f(Z)=\theta\} 
+        &=
+        \P\{f(Z)=H\given\theta=H\}/2
+        +\P\{f(Z)=T\given\theta=T\}/2\\
+        &=
+        \P\{f(Z)=H\given\theta=H\}/2
+        +\P\{f(Z)=T\given\theta=H\}/2\\
+        &= 1/2 .
+    \end{align*}
+
+    \normalfont
+    \endif
+
+
+**3.** Let $X_n$ be the simplified "polymerase complex assembly" Markov chain defined in class,
+with transition matrix (where "$\dagger$" means transcription):
+\begin{align}
+P = 
+\begin{array}{c c}  
+&
+\begin{array}{c c c c c c} 
+    \varnothing & \alpha & \beta & \alpha+\beta & \text{pol} & \dagger \\ 
+\end{array}
+\\
+\begin{array} {c c}
+    \varnothing \\ \alpha \\ \beta \\ \alpha+\beta \\ \text{pol} \\ \dagger 
+\end{array}
+&
+\left[
+\begin{array}{c c c c c c}
+    * & k_\alpha & k_\beta & 0 & 0 & 0 \\
+    k_\alpha & * & 0 & k_\beta &0 & 0 \\
+    k_\beta & 0 & * & k_\alpha & 0 & 0 \\
+    0 & k_\beta & k_\alpha & * & k_\text{pol} & 0 \\
+    0 & 0 & 0 & 0 & * & 1 \\
+    0 & 0 & 0 & 1 & 0 & * 
+\end{array}
+\right]
+\end{array}
+\end{align}
+Here the "$*$"s on the diagonal are set so that rows sum to 1.
+Let
+\begin{align}
+    \tau = \min\{ n \ge 0 : X_n = \dagger \} .
+\end{align}
+
+a.  Set $k_\alpha = k_\beta = 0.2$ and $k_\text{pol}=0.5$,
+    and compute numerically $\E[\tau]$ for all starting states.
+    (And, explain how you do it!)
+
+    \ifdef{SOLUTIONS}
+    **Solution:**
+    \it 
+    ```{r setup}
+    ka <- kb <- 0.2
+    kpol <- 0.5
+    M <- matrix( c(
+        0, ka, kb, 0, 0, 0,
+        ka, 0, 0, kb, 0, 0,
+        kb, 0, 0, ka, 0, 0,
+        0, kb, ka, 0, kpol, 0,
+        0, 0, 0, 0, 0, 1,
+        0, 0, 0, 1, 0, 0
+        ), byrow=TRUE, nrow=6 )
+    diag(M) <- 1-rowSums(M)
+    ```
+
+    Now, since $\E^a[\tau] = h$ solves $(I-Q)^{-1}1$ where Q is
+    ```{r Q}
+    M[1:5,1:5]
+    ```
+    the solution is
+    ```{r h}
+    h <- solve( diag(5) - M[1:5,1:5], rep(1,5) )
+    h
+    ```
+    \normalfont
+    \endif
+
+b.  Compute numerically the stationary distribution.
+    What is the long-term average rate of transcription
+    (i.e., mean number of visits to $\dagger$ per unit time)?
+
+    \ifdef{SOLUTIONS}
+    **Solution:**
+    \it
+    The stationary distribution $\pi$ is the first left eigenvector of $P$:
+    ```{r stationary}
+    pivec <- eigen(t(M))$vectors[,1]
+    pivec <- Re( zapsmall(pivec)/sum(pivec) )
+    pivec
+    ```
+    and the mean time between visits to $\dagger$ is `r 1/pivec[6]`.
+    \normalfont
+    \endif
+
+c.  Verify your computations in *(a)* and *(b)*
+    using a simulation of the chain.
+
+
+    \ifdef{SOLUTIONS}
+    **Solution:**
+    \it
+
+    First, simulate the chain
+    (many in parallel for efficiency):
+    ```{r sim_mc}
+    nchains <- 1e4
+    nsteps <- 300
+    step.probs <- lapply(1:nrow(M), function (k) {
+            list( 
+                states=which(M[k,]>0),
+                probs=c(0,cumsum(M[k,M[k,]>0]))
+            )
+        } )
+    mcruns <- matrix(0, nrow=nchains, ncol=nsteps)
+    # uniform initial state:
+    mcruns[,1] <- sample.int(nrow(M),nchains,replace=TRUE)
+    for (k in 2:nsteps) {
+        for (state in 1:nrow(M)) {
+            dothese <- which(mcruns[,k-1]==state)
+            newstate <- findInterval( runif(length(dothese)), step.probs[[state]]$probs )
+            mcruns[dothese,k] <- step.probs[[state]]$states[newstate]
+        }
+    }
+    ```
+
+    Now, let's find and compare the first hitting times to $\dagger$ (state 6):
+    ```{r hts}
+    t.dagger <- apply( mcruns==6, 1, function (x) {
+            min(which(x))-1
+        } )
+    rbind(
+        theory=c(h,0),
+        simulation=tapply(t.dagger,mcruns[,1],mean),
+        SE=tapply(t.dagger,mcruns[,1],sd)/sqrt(tapply(t.dagger,mcruns[,1],length))
+        )
+    ```
+    The simulation is within $\pm 2$SE of the theory.
+
+    And, for the stationary probability, we'll use the last 100 steps in each chain:
+    ```{r sim_pi}
+    est.pi <- table( mcruns[,200:300] )/(nchains*100)
+    rbind(
+        theory=pivec,
+        simulation=est.pi,
+        SE=sqrt(pivec*(1-pivec)/(nchains*100))
+        )
+    ```
+    The SE in this case is not right,
+    since the observations aren't independent,
+    but it's still a useful point of comparison.
+
+    \normalfont
+    \endif
