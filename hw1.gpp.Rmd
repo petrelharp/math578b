@@ -33,9 +33,9 @@ a.  Show that if $X_0 = 0$ then the distribution of
     and since $X_0=0$,
     \begin{align*}
         \P\{ \tau > n \} 
-        &= \P\{ X_0 = X_1 = X_2 = X_3 = \cdots = X_n = 0 \} \\
-        &= \P\{ X_0 = 0 \} \P\{ X_1 = 0 \given X_0 = 0 \} \cdots \P\{ X_n = 0 \given X_{n-1} = 0 \}  \\
-        &= (1-\alpha)^n .
+        &= \P\{ X_0 = X_1 = X_2 = X_3 = \cdots = X_{n-1} = 0, X_n=1 \} \\
+        &= \P\{ X_0 = 0 \} \P\{ X_1 = 0 \given X_0 = 0 \} \cdots \P\{ X_n = 1 \given X_{n-1} = 0 \}  \\
+        &= (1-\alpha)^n \times \alpha .
     \end{align*}
     This is the expression for the geometric distribution.
 
