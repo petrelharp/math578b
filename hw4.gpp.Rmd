@@ -1,0 +1,99 @@
+---
+title: "Math 578B -- Fall 2015 -- Homework #4"
+author: "Peter Ralph"
+date: "due 22 September"
+header-includes:
+    - \usepackage{fullpage}
+---
+
+\newcommand{\calA}{\mathcal{A}}
+\renewcommand{\P}{\mathbb{P}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\given}{\mid}
+\newcommand{\oneb}{\mathbf{1}}
+\newcommand{\cor}{\text{cor}\,}
+
+<!-- wrap solutions in \ifdef{SOLUTIONS} ... \endif -->
+
+```{r knit_setup, include=FALSE}
+fig.dim <- 5
+knitr::opts_chunk$set(fig.height=fig.dim,fig.width=2*fig.dim,fig.align='center')
+```
+
+
+**1.** 
+Suppose we have a 10 cm$^2$ plate of bacteria, at the (low) density $10^5$ cells/cm^2.
+We provide the bacteria with a food source that they cannot normally utilize,
+but that each bacterial cell has a small probability $\mu$ of carrying a mutation
+that allows that cell to utilize the food source.
+Each cell that does carry the mutation 
+waits a random number of minutes (with an Exponential distribution of mean 20)
+and then begin growing,
+eventually forming clusters that we can see, and count.
+
+a.  What is the probability of there being $n$ bacteria carrying the mutation on the plate, 
+    as a function of $\mu$?
+
+b.  Suppose that a cluster that has been growing for $t$ minutes has radius $1.05^t \times 10^{-3}$cm,
+    and we can only detect clusters with radius at least 0.01cm.
+    Suppose we counted 17 clusters of radius at least 0.01cm after 2 hours,
+    and give an estimate of $\mu$.
+
+c.  Now suppose that each cell carrying the mutation fails to begin growing,
+    and instead dies, with probability $p$.
+    Explain why we cannot estimate both $\mu$ and $p$ separately from these data.
+
+
+```{r sim_bps}
+sim_bp <- function (ngens,offspring,z=1,...) {
+    k <- 1
+    while ( k<ngens ) {
+        z <- sum(offspring(z,...)) 
+        if (z==0) { break; } else { k <- k+1 }
+    }
+    return(k-1)
+}
+
+ngens <- 1e8
+svals <- 10^(seq(-4,-2,length.out=10))
+nreps <- 1e4
+
+pois.lts <- lapply(svals, function (s) { replicate( nreps, sim_bp(ngens,rpois,lambda=1-s) ) } )
+pois.means <- sapply( pois.lts, mean, na.rm=TRUE )
+pois.sds <- sapply( pois.lts, sd, na.rm=TRUE )
+
+geom.lts <- lapply(svals, function (s) { replicate( nreps, sim_bp(ngens,rgeom,prob=1/(2-s)) ) } )
+geom.means <- sapply( geom.lts, mean, na.rm=TRUE )
+geom.sds <- sapply( geom.lts, sd, na.rm=TRUE )
+
+bif.lts <- lapply( svals, function (s) { replicate( nreps, sim_bp(ngens,rbinom,size=2,prob=(1-s)/2)) } )
+bif.means <- sapply( bif.lts, mean, na.rm=TRUE )
+bif.sds <- sapply( bif.lts, sd, na.rm=TRUE )
+
+layout(t(1:2))
+
+plot( svals, pois.means, col='red', ylim=range(pois.means,geom.means,bif.means) )
+arrows( x0=svals, y0=pois.means-2*pois.sds/sqrt(nreps), y1=pois.means+2*pois.sds/sqrt(nreps), angle=90, code=3, col='red' )
+points( svals, geom.means, col='blue' )
+arrows( x0=svals, y0=geom.means-2*geom.sds/sqrt(nreps), y1=geom.means+2*geom.sds/sqrt(nreps), angle=90, code=3, col='blue' )
+points( svals, bif.means, col='green' )
+arrows( x0=svals, y0=bif.means-2*bif.sds/sqrt(nreps), y1=bif.means+2*bif.sds/sqrt(nreps), angle=90, code=3, col='green' )
+
+plot( svals, pois.means, col='red', ylim=range(pois.means,geom.means,bif.means), log='xy' )
+arrows( x0=svals, y0=pois.means-2*pois.sds/sqrt(nreps), y1=pois.means+2*pois.sds/sqrt(nreps), angle=90, code=3, col='red' )
+abline( coef( lm( log10(pois.means) ~ log10(svals) ) ), untf=FALSE, col='red' )
+points( svals, geom.means, col='blue' )
+arrows( x0=svals, y0=geom.means-2*geom.sds/sqrt(nreps), y1=geom.means+2*geom.sds/sqrt(nreps), angle=90, code=3, col='blue' )
+abline( coef( lm( log10(geom.means) ~ log10(svals) ) ), untf=FALSE, col='blue' )
+points( svals, bif.means, col='green' )
+arrows( x0=svals, y0=bif.means-2*bif.sds/sqrt(nreps), y1=bif.means+2*bif.sds/sqrt(nreps), angle=90, code=3, col='green' )
+abline( coef( lm( log10(bif.means) ~ log10(svals) ) ), untf=FALSE, col='green' )
+
+coefs <- rbind(
+        poisson=coef( lm( log(pois.means) ~ log(svals) ) ),
+        geometric=coef( lm( log(geom.means) ~ log(svals) ) ),
+        bifurcating=coef( lm( log(bif.means) ~ log(svals) ) )
+    )
+coefs
+
+```
