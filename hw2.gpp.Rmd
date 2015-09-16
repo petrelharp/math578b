@@ -66,26 +66,31 @@ a.  Since the factors $\alpha$ and $\beta$ can stay on the DNA,
         u(a) = \E[ N \given X_0 = a ] .
     \end{align*}
 
-\ifdef{SOLUTIONS}
-    First, $u(\varnothing)=0$.
-    For $a \neq \dagger$,
+    \ifdef{SOLUTIONS}
+    **Solution:**
+    \it
+    Note that $u(\varnothing)=0$.
+    By conditioning on $X_1$, if $a \neq \varnothing$,
+    and by time-homogeneity and the Markov property,
     \begin{align*}
-        u(a) = \sum_b P_{ab} u(b) ,
+        u(a) &= \E[ N \given X_0 = a ] \\
+            &= \delta_\dagger(a) +  \E[ u(X_1) ] \\
+            &= \delta_\dagger(a) +  \sum_b P_{ab} u(b) .
     \end{align*}
-    and finally,
-    \begin{align*}
-        u(\dagger) = 1 + \sum_b P_{\dagger b} u(b) .
-    \end{align*}
-\endif
+    Here $\delta_\dagger(a)=1$ if $a=\dagger$ and is 0 otherwise.
+    \normalfont
+    \endif
 
 b.  Set $k_\alpha = k_\beta = 0.2$ and $k_\text{pol}=0.5$,
     and compute numerically $u(a)$ for each $a$.
 
     \ifdef{SOLUTIONS}
-    ```{r setup}
+    **Solution:**
+    \it 
+    ```{r def_P}
     ka <- kb <- 0.2
     kpol <- 0.5
-    M <- matrix( c(
+    P <- matrix( c(
         0, ka, kb, 0, 0, 0,
         ka, 0, 0, kb, 0, 0,
         kb, 0, 0, ka, 0, 0,
@@ -93,21 +98,55 @@ b.  Set $k_\alpha = k_\beta = 0.2$ and $k_\text{pol}=0.5$,
         0, 0, 0, 0, 0, 1,
         0, 0, 0, 1, 0, 0
         ), byrow=TRUE, nrow=6 )
-    diag(M) <- 1-rowSums(M)
-    ```
-
-    Now, since $u$ solves $(I-Q)^{-1}\delta_\dagger$ where Q is
-    ```{r Q}
-    pander::pander(M[2:6,2:6])
-    ```
-    the solution is
-    ```{r h}
-    h <- solve( diag(5) - M[2:6,2:6], c(rep(0,4),1) )
-    pander::pander(h)
+    diag(P) <- 1-rowSums(P)
+    # here is u:
+    u <- numeric(6)
+    u[2:6] <- solve( diag(5)-P[2:6,2:6], c(rep(0,4),1) )
+    u
     ```
     \endif
 
+
 c.  Verify your answer by simulation.
+
+    \ifdef{SOLUTIONS}
+    **Solution:**
+    \it
+
+    First, simulate the chain
+    (many in parallel for efficiency):
+    ```{r sim_mc}
+    nchains <- 1e4
+    nsteps <- 300
+    step.probs <- lapply(1:nrow(P), function (k) {
+            list( 
+                states=which(P[k,]>0),
+                probs=c(0,cumsum(P[k,P[k,]>0]))
+            )
+        } )
+    mcruns <- matrix(0, nrow=nchains, ncol=nsteps)
+    # uniform initial state:
+    mcruns[,1] <- sample.int(nrow(P),nchains,replace=TRUE)
+    for (k in 2:nsteps) {
+        for (state in 1:nrow(P)) {
+            dothese <- which(mcruns[,k-1]==state)
+            newstate <- findInterval( runif(length(dothese)), step.probs[[state]]$probs )
+            mcruns[dothese,k] <- step.probs[[state]]$states[newstate]
+        }
+    }
+    return.times <- apply(mcruns==1,1,function (x) which(x)[1])
+    t.visits <- rowSums( (mcruns==6) & (col(mcruns)<return.times[row(mcruns)]) )
+    # here is the comparison:
+    rbind(
+            theory=u,
+            simulation=tapply( t.visits, mcruns[,1], mean ),
+            se=tapply( t.visits, mcruns[,1], sd )/sqrt(nchains)
+        )
+    ```
+    That agrees nicely.
+
+    \normalfont
+    \endif
 
 **2.** Suppose that $X$ is a Markov chain on a state space $\calA$,
     and that $\varnothing$ and $\dagger$ are two distinct sets of states in $\calA$.
@@ -124,6 +163,39 @@ c.  Verify your answer by simulation.
     \frac{h(b)}{h(a)}P_{ab} .
     \end{aligned}$$
 
+\ifdef{SOLUTIONS}
+**Solution:**
+\it
+Recall that $\P^a$ denotes probabilities with $X_0=a$.
+By time-homogeneity,
+$$\begin{aligned}
+\P\{ X_{n+1} = b \given X_n = a \, \text{and} \, \tau_\varnothing < \tau_\dagger \}
+&=
+\P^a\{ X_{1} = b \given \tau_\varnothing < \tau_\dagger \} .
+\end{aligned}$$
+By the definition of conditional probability,
+and then the Markov property,
+$$\begin{aligned}
+\P^a\{ X_{1} = b \given \tau_\varnothing < \tau_\dagger \} .
+&=
+\frac{ 
+    \P^a\{ X_{1} = b \,\&\, \tau_\varnothing < \tau_\dagger \} 
+}{
+    \P\{ \tau_\varnothing < \tau_\dagger \}
+}\\
+&=
+\frac{ 
+    \P^a\{ X_{1} = b \}
+    \P^a\{ \tau_\varnothing < \tau_\dagger \given X_{1} = b \} 
+}{
+    \P\{ \tau_\varnothing < \tau_\dagger \}
+}\\
+&=
+\frac{h(b)P_{ab}}{h(a)} .
+\end{aligned}$$
+\normalfont
+\endif
+
 
 **3.** Let $X$ be a Markov chain on $k$-subsets of $[n]:=\{1,2,\ldots,n\}$, 
     for some fixed $k \le n/2$, defined as follows:
@@ -135,6 +207,31 @@ c.  Verify your answer by simulation.
     Show that the unique stationary distribution of $X$ is uniform.
     (And, say why the "do nothing" step is necessary!)
 
+
+\ifdef{SOLUTIONS}
+**Solution:**
+\it
+We know that if $\pi_a P_{ab} = \pi_b P_{ba}$  for all states $a,b$
+and some vector $\pi$,
+then the chain is reversible,
+and $\pi$ is a stationary distribution.
+Note that to check this we need only know $\pi$ up to a constant:
+so, to check if the chain is reversible with a stationary distribution that is uniform,
+we need only check that $P_{ab} = P_{ba}$ for every pair of states $a,b$.
+But, this is obvious, 
+because if we can produce $b$ from $a$ by one step of the above chain,
+then one can go from $b$ back to $a$ in the same way (by picking the new element), 
+and there is at most one way to go between each pair of states.
+
+To show that this is the *unique* stationary distribution,
+we need to show that the chain is irreducible and aperiodic.
+The chain is irreducible because it is clearly possible to get from any state to any other state by a series of moves of this form.
+The chain is aperiodic because it includes the "do nothing" step:
+to see why this is necessary, consider the chain with $k=1$ and $n=2$:
+without that step, the chain would alternate between the two possible states each step
+(thus being periodic with period 2).
+\normalfont
+\endif
 
 **4.** *(soft TSP)*
     Suppose we have a distance matrix $D$ with pairwise distances between each of $n$ points,
@@ -155,13 +252,14 @@ a.  Sample $n=100$ points uniformly from the unit square $[0,1]^2$,
     and compute $D$ for this configuration.
     Use this $D$ in subsequent problems.
 
-\ifdef{SOLUTIONS}
-```{r tsp_D}
-npts <- 100
-xy <- data.frame( x=runif(npts), y=runif(npts) )
-D <- sqrt( outer(xy$x,xy$x,"-")^2 + outer(xy$y,xy$y,"-")^2 )
-```
-\endif
+    \ifdef{SOLUTIONS}
+    ```{r tsp_D, cache=TRUE}
+    npts <- 100
+    xy <- data.frame( x=runif(npts), y=runif(npts) )
+    D <- sqrt( outer(xy$x,xy$x,"-")^2 + outer(xy$y,xy$y,"-")^2 )
+    plot(D,asp=1)
+    ```
+    \endif
 
     
 b.  Implement the Metropolis algorithm to sample from $\pi_T$
@@ -199,7 +297,7 @@ metrop_step <- function (sigma,T,L0=L(sigma)) {
 ```
 
 Now, run the MCMCs:
-```{r runs, cache=TRUE}
+```{r runs, cache=TRUE, depends="tsp_D"}
 run_metrop <- function (Tval,nsteps) {
     sigma.mat <- matrix(NA,nrow=nsteps,ncol=npts)
     Lvec <- numeric(nsteps)
@@ -217,33 +315,34 @@ runs <- lapply( Tvals, run_metrop, nsteps=1e5 )
 
 
 First, plot $T=`r Tvals[1]`$:
-```{r T1}
-with( list2env(runs[[1]]), {
-    plot(Lvec,ylab="length",xlab="step")
+```{r T1, cache=TRUE, depends="runs"}
+which.L <- 1
+    plot(runs[[which.L]]$Lvec,ylab="length",xlab="step")
     # looks stable by 5000
+```
+```{r T1_2, cache=TRUE, depends="runs"}
     layout(matrix(1:9,nrow=3))
-    for (k in seq(1,nrow(sigma.mat),length.out=10)[-1]) {
-        plot( xy$x[sigma.mat[k,]], xy$y[sigma.mat[k,]], type='l', 
+    for (k in seq(1,nrow(runs[[which.L]]$sigma.mat),length.out=10)[-1]) {
+        plot( xy$x[runs[[which.L]]$sigma.mat[k,]], xy$y[runs[[which.L]]$sigma.mat[k,]], type='l', 
              xlim=c(0,1), ylim=c(0,1), asp=1, xlab='', ylab='' )
     }
-    layout(1)
-    hist(Lvec[(nrow(sigma.mat)/2):nrow(sigma.mat)],main=paste("T=",Tvals[1]))
-} )
+```
+```{r T1_3, cache=TRUE, depends="runs"}
+    hist(runs[[1]]$Lvec[(nrow(runs[[1]]$sigma.mat)/2):nrow(runs[[1]]$sigma.mat)],main=paste("T=",Tvals[1]))
 ```
 
 Now, plot $T=`r Tvals[2]`$:
-```{r T2}
-with( list2env(runs[[2]]), {
-    plot(Lvec,ylab="length",xlab="step")
+```{r T2, cache=TRUE, depends="runs"}
+which.L <- 1
+    plot(runs[[which.L]]$Lvec,ylab="length",xlab="step")
     # looks stable by 5000
     layout(matrix(1:9,nrow=3))
-    for (k in seq(1,nrow(sigma.mat),length.out=10)[-1]) {
-        plot( xy$x[sigma.mat[k,]], xy$y[sigma.mat[k,]], type='l', 
+    for (k in seq(1,nrow(runs[[which.L]]$sigma.mat),length.out=10)[-1]) {
+        plot( xy$x[runs[[which.L]]$sigma.mat[k,]], xy$y[runs[[which.L]]$sigma.mat[k,]], type='l', 
              xlim=c(0,1), ylim=c(0,1), asp=1, xlab='', ylab='' )
     }
     layout(1)
-    hist(Lvec[(nrow(sigma.mat)/2):nrow(sigma.mat)],main=paste("T=",Tvals[2]))
-} )
+    hist(runs[[1]]$Lvec[(nrow(runs[[1]]$sigma.mat)/2):nrow(runs[[1]]$sigma.mat)],main=paste("T=",Tvals[1]))
 ```
 
 \endif
@@ -255,7 +354,7 @@ c.  For each of the Markov chains at $T=10$ and $T=0.05$,
     Plot, and explain the differences between the two chains you see.
 
 \ifdef{SOLUTIONS}
-```{r plot_acf}
+```{r plot_acf, cache=TRUE, depends="runs"}
 acf(runs[[1]]$Lvec,lag.max=length(runs[[1]]$Lvec),main=Tvals[1])
 acf(runs[[2]]$Lvec,lag.max=length(runs[[2]]$Lvec),main=Tvals[2])
 ```
