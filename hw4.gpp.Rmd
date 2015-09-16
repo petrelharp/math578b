@@ -32,20 +32,144 @@ and then begin growing,
 eventually forming clusters that we can see, and count.
 
 a.  What is the probability of there being $n$ bacteria carrying the mutation on the plate, 
-    as a function of $\mu$?
+    as a function of $\mu$?  (Regardless of if they've grown or not.)
+
+    \ifdef{SOLUTIONS}
+    **Solution:**
+    \it
+    This is well-modeled by a Poisson process,
+    so if we let $\nu=\mu\times10^{6}$, this is $e^{-\nu} \nu^n/n!$.
+    \normalfont
+    \endif
 
 b.  Suppose that a cluster that has been growing for $t$ minutes has radius $1.05^t \times 10^{-3}$cm,
     and we can only detect clusters with radius at least 0.01cm.
-    Suppose we counted 17 clusters of radius at least 0.01cm after 2 hours,
+    Suppose we counted 17 clusters of radius at least 0.01cm after 1 hour,
     and give an estimate of $\mu$.
+
+    \ifdef{SOLUTIONS}
+    **Solution:**
+    \it
+    To have grown to 0.01cm in 1 hours = 60 minutes, they must have been growing for
+    $\log(10)/\log(1.05)=47.2$ minutes,
+    and so have started growing within the first 60-47.2=12.8 minutes.
+    The chance of this is $\exp(-12.8/20)=0.527$.
+    By Poisson coloring,
+    the number of colonies that have done so is Poisson with intensity $\nu \times 0.527$,
+    and so the maximum likelihood estimator for $\nu$ is $17/0.527=32.25$,
+    and the estimator for $\mu$ is $3.225 \times 10^{-7}$.
+    \normalfont
+    \endif
 
 c.  Now suppose that each cell carrying the mutation fails to begin growing,
     and instead dies, with probability $p$.
     Explain why we cannot estimate both $\mu$ and $p$ separately from these data.
 
 
-```{r sim_bps}
-sim_bp <- function (ngens,offspring,z=1,...) {
+
+**2.** Suppose that a class of deleterious mutations enters a large population of size $N$ at rate $\mu$ per birth:
+each new individual born has probability $\mu$ of being born with a new deleterious mutation not carried by her parents.
+Suppose that each such new mutation is of a new type,
+that an individual carrying $n$ mutations leaves behind on average $(1-s)^n$ copies of each of her genes,
+and that $\mu$ is small, so we can neglect the chance of someone being born with two new ones.
+In class, we showed that if we treated the dynamics of these mutations as independent branching processes,
+then the expected number of types of mutation is $\mu N \E[\tau]$,
+each type is present in an average of $\mu N/s$ individuals.
+We are interested in the distribution of number of distinct types,
+and how it depends on the number of offspring per individual.
+
+a.  Simulate from this process with $N=10^6$, $\mu=10^{-6}$, and $s=0.001$,
+    assuming that a Poisson number of new mutations enter each generation,
+    and that each behaves as an independent branching process
+    with offspring distribution Poisson with mean $1-s$.
+    Provide descriptive plots of the time evolution of this process
+    at stationarity.
+
+    \ifdef{SOLUTIONS}
+    **Solution:**
+    \it
+
+    ```{r sim_bps}
+    sim_muts <- function (ngens,offspring,muN=mu*N,mu,N,max.muts=muN*100,z0=0) {
+        z <- matrix(0L,nrow=max.muts,ncol=ngens)
+        z[,1] <- z0
+        for (k in 2:ngens) {
+            z[,k] <- offspring(z[,k-1])
+            new.muts <- sample(which(z[,k]==0), rpois(1,muN)) # errors if max.muts isn't big enough
+            z[new.muts,k] <- 1
+        }
+        return(z)
+    }
+    s <- 0.001
+    # get it started
+    history <- sim_muts(ngens=1000,offspring=function(z){rpois(length(z),lambda=(1-s)*z)},muN=1,max.muts=200)
+    history <- sim_muts(ngens=1000,offspring=function(z){rpois(length(z),lambda=(1-s)*z)},muN=1,max.muts=200,z0=history[,1000])
+    matplot(t(history),type='l',main="frequencies of distinct mutants",xlab="generations",ylab="numbers")
+    plot(colSums(history>0),type='l',main="number of distinct mutants",xlab="generations",ylab="number")
+    ```
+
+    \normalfont
+    \endif
+
+b.  From the simulation, estimate the distribution of the number of distinct mutations present in the population
+    and the frequency of the most common mutation.
+
+    \ifdef{SOLUTIONS}
+    **Solution:**
+    \it
+    Run it for longer this time:
+    ```{r longer_run}
+    pois.hist <- sim_muts(ngens=100000,offspring=function(z){rpois(length(z),lambda=(1-s)*z)},muN=1,max.muts=200,z0=history[,ncol(history)])
+    plot( table( colSums(pois.hist>0) )/ncol(pois.hist), ylab="frequency", xlab="number of mutation types", main="distribution of number of mutation types" )
+    hist( apply(pois.hist,2,max), xlab="number of copies in the population", main="distribution of most common mutation", breaks=50 )
+    ```
+    \normalfont
+    \endif
+
+c.  Modify your simulation so that the offspring number is now Binomial$(2,p)$, with $p$ chosen so the mean number of offspring is $1-s$.
+    Estimate the distribution of the number of distinct mutations present,
+    and compare to your answer in (b).
+
+
+    \ifdef{SOLUTIONS}
+    **Solution:**
+    \it
+    ```{r sim_bifur}
+    # hm, this one needs longer to reach equilibrium
+    binom.fn <- function(z){rbinom(length(z),size=2*z,prob=(1-s)/2)}
+    history <- sim_muts(ngens=1000,offspring=binom.fn,muN=1,max.muts=200)
+    history <- sim_muts(ngens=1000,offspring=binom.fn,muN=1,max.muts=200,z0=history[,1000])
+    matplot(t(history),type='l',main="frequencies of distinct mutants",xlab="generations",ylab="numbers")
+    plot(colSums(history>0),type='l',main="number of distinct mutants",xlab="generations",ylab="number")
+    ```
+    and the results
+    ```{r hist_bifur}
+    binom.hist <- sim_muts(ngens=100000,offspring=binom.fn,muN=1,max.muts=200,z0=history[,1000])
+    binom.counts <- tabulate(colSums(binom.hist>0))/ncol(binom.hist)
+    pois.counts <- tabulate(colSums(pois.hist>0))/ncol(pois.hist)
+    # plot number of types
+    plot(x=seq_along(pois.counts)-0.1, y=pois.counts, type='h', lwd=2, ylab="frequency", 
+            xlab="number of mutation types", main="distribution of number of mutation types",
+            xlim=c(0,max(length(pois.counts),length(binom.counts)))
+        )
+    points(x=seq_along(binom.counts)+0.1, y=binom.counts, type='h', lwd=2, col='red' )
+    # and size of largest type
+    hist( apply(binom.hist,2,max), breaks=50, col=adjustcolor("red",0.5), freq=FALSE, 
+        xlab="number of copies in the population", main="distribution of most common mutation"  )
+    hist( apply(pois.hist,2,max), breaks=50, col=adjustcolor("black",0.5), freq=FALSE, add=TRUE )
+    ```
+    \normalfont
+    \endif
+
+    \normalfont
+    \endif
+
+
+
+
+\ifdef{SOLUTIONS}
+```{r sim_lifetimes}
+sim_lifetime <- function (ngens,offspring,z=1,...) {
     k <- 1
     while ( k<ngens ) {
         z <- sum(offspring(z,...)) 
@@ -58,15 +182,15 @@ ngens <- 1e8
 svals <- 10^(seq(-4,-2,length.out=10))
 nreps <- 1e4
 
-pois.lts <- lapply(svals, function (s) { replicate( nreps, sim_bp(ngens,rpois,lambda=1-s) ) } )
+pois.lts <- lapply(svals, function (s) { replicate( nreps, sim_lifetime(ngens,rpois,lambda=1-s) ) } )
 pois.means <- sapply( pois.lts, mean, na.rm=TRUE )
 pois.sds <- sapply( pois.lts, sd, na.rm=TRUE )
 
-geom.lts <- lapply(svals, function (s) { replicate( nreps, sim_bp(ngens,rgeom,prob=1/(2-s)) ) } )
+geom.lts <- lapply(svals, function (s) { replicate( nreps, sim_lifetime(ngens,rgeom,prob=1/(2-s)) ) } )
 geom.means <- sapply( geom.lts, mean, na.rm=TRUE )
 geom.sds <- sapply( geom.lts, sd, na.rm=TRUE )
 
-bif.lts <- lapply( svals, function (s) { replicate( nreps, sim_bp(ngens,rbinom,size=2,prob=(1-s)/2)) } )
+bif.lts <- lapply( svals, function (s) { replicate( nreps, sim_lifetime(ngens,rbinom,size=2,prob=(1-s)/2)) } )
 bif.means <- sapply( bif.lts, mean, na.rm=TRUE )
 bif.sds <- sapply( bif.lts, sd, na.rm=TRUE )
 
@@ -97,3 +221,4 @@ coefs <- rbind(
 coefs
 
 ```
+\endif
