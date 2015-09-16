@@ -26,10 +26,6 @@ Suppose we have a 10 cm$^2$ plate of bacteria, at the (low) density $10^5$ cells
 We provide the bacteria with a food source that they cannot normally utilize,
 but that each bacterial cell has a small probability $\mu$ of carrying a mutation
 that allows that cell to utilize the food source.
-Each cell that does carry the mutation 
-waits a random number of minutes (with an Exponential distribution of mean 20)
-and then begin growing,
-eventually forming clusters that we can see, and count.
 
 a.  What is the probability of there being $n$ bacteria carrying the mutation on the plate, 
     as a function of $\mu$?  (Regardless of if they've grown or not.)
@@ -42,10 +38,15 @@ a.  What is the probability of there being $n$ bacteria carrying the mutation on
     \normalfont
     \endif
 
-b.  Suppose that a cluster that has been growing for $t$ minutes has radius $1.05^t \times 10^{-3}$cm,
+b.  Suppose that 
+    each cell that does carry the mutation 
+    waits a random number of minutes (with an Exponential distribution of mean 20)
+    and then begins growing,
+    eventually forming clusters that we can see, and count.
+    A cluster that has been growing for $t$ minutes has radius $1.05^t \times 10^{-3}$cm,
     and we can only detect clusters with radius at least 0.01cm.
-    Suppose we counted 17 clusters of radius at least 0.01cm after 1 hour,
-    and give an estimate of $\mu$.
+    Suppose we counted 17 clusters of radius at least 0.01cm after 1 hour:
+    use this datum to give an estimate of $\mu$.
 
     \ifdef{SOLUTIONS}
     **Solution:**
@@ -74,9 +75,6 @@ that an individual carrying $n$ mutations leaves behind on average $(1-s)^n$ cop
 and that $\mu$ is small, so we can neglect the chance of someone being born with two new ones.
 In class, we showed that the number and distribution of types of mutations in the population
 depend on the demographic details.
-In class, we showed that if we treated the dynamics of these mutations as independent branching processes,
-then the expected number of types of mutation is $\mu N \E[\tau]$,
-each type is present in an average of $\mu N/s$ individuals.
 We are interested in the distribution of number of distinct types,
 and how it depends on the number of offspring per individual.
 
