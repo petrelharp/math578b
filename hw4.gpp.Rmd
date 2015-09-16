@@ -72,6 +72,8 @@ each new individual born has probability $\mu$ of being born with a new deleteri
 Suppose that each such new mutation is of a new type,
 that an individual carrying $n$ mutations leaves behind on average $(1-s)^n$ copies of each of her genes,
 and that $\mu$ is small, so we can neglect the chance of someone being born with two new ones.
+In class, we showed that the number and distribution of types of mutations in the population
+depend on the demographic details.
 In class, we showed that if we treated the dynamics of these mutations as independent branching processes,
 then the expected number of types of mutation is $\mu N \E[\tau]$,
 each type is present in an average of $\mu N/s$ individuals.
@@ -161,11 +163,30 @@ c.  Modify your simulation so that the offspring number is now Binomial$(2,p)$, 
     \normalfont
     \endif
 
+
+d.  In class we showed that the mean number of copies present in the population
+    is $\mu N/s$, regardless of the demographic model.
+    Check this using both simulations above.
+
+    \ifdef{SOLUTIONS}
+    **Solution:**
+    \it
+    ```{r hist_totals}
+    # plot number of types
+    hist( colSums(binom.hist), breaks=50, col=adjustcolor("red",0.5), freq=FALSE, 
+        xlab="number of mutations in the population", main="distribution of total number of mutations",
+        xlim=c(0,5000) )
+    hist( colSums(pois.hist), breaks=50, col=adjustcolor("black",0.5), freq=FALSE, add=TRUE )
+    legend("topright",fill=c('black','red'),legend=c("poisson","binomial"))
+    ```
+    Here, $\mu N /s = `r 1/s`$.
+    The mean number of mutations for the Poisson demography is `r mean(colSums(pois.hist))`.
+    and for the Binomial demography, the mean is `r mean(colSums(binom.hist))`.
+    This is pretty close, we could get standard errors if we account for autocorrelation.
     \normalfont
     \endif
 
-
-
+<!--  lifetime estimate
 
 \ifdef{SOLUTIONS}
 ```{r sim_lifetimes}
@@ -222,3 +243,5 @@ coefs
 
 ```
 \endif
+
+-->
