@@ -157,7 +157,7 @@ c.  Verify your answer by simulation.
     $$
     Show that
     $$\begin{aligned}
-    \P\{ X_{n+1} = b \given X_n = a \, \text{and} \, \tau_\varnothing < \tau_\dagger \}
+    \P\{ X_{n+1} = b \given X_n = a \, \text{and} \, n < \tau_\varnothing < \tau_\dagger \}
     =
     \frac{h(b)}{h(a)}P_{ab} .
     \end{aligned}$$
@@ -168,7 +168,7 @@ c.  Verify your answer by simulation.
 Recall that $\P^a$ denotes probabilities with $X_0=a$.
 By time-homogeneity,
 $$\begin{aligned}
-\P\{ X_{n+1} = b \given X_n = a \, \text{and} \, \tau_\varnothing < \tau_\dagger \}
+\P\{ X_{n+1} = b \given X_n = a \, \text{and} \, n < \tau_\varnothing < \tau_\dagger \}
 &=
 \P^a\{ X_{1} = b \given \tau_\varnothing < \tau_\dagger \} .
 \end{aligned}$$

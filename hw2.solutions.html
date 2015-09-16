@@ -156,8 +156,8 @@ rbind(
     )</code></pre>
 <pre><code>##            1          2          3          4          5          6
 ## theory     0 1.25000000 1.25000000 2.50000000 3.50000000 3.50000000
-## simulation 0 1.27952522 1.29974811 2.39774078 3.48716418 3.54953380
-## se         0 0.02595371 0.02420939 0.02824524 0.02948429 0.02925189</code></pre>
+## simulation 0 1.15847666 1.24969549 2.63306699 3.51070155 3.30349971
+## se         0 0.02369535 0.02432968 0.03171787 0.02859001 0.02853126</code></pre>
 <p>That agrees nicely.</p>
 <p></p></li>
 </ol>
@@ -165,7 +165,7 @@ rbind(
     h(a) = {\mathbb{P}}^a\{ \tau_\varnothing &lt; \tau_\dagger \} ,
     \end{aligned}
     \]</span> Show that <span class="math display">\[\begin{aligned}
-    {\mathbb{P}}\{ X_{n+1} = b {\mid}X_n = a \, \text{and} \, \tau_\varnothing &lt; \tau_\dagger \}
+    {\mathbb{P}}\{ X_{n+1} = b {\mid}X_n = a \, \text{and} \, n &lt; \tau_\varnothing &lt; \tau_\dagger \}
     =
     \frac{h(b)}{h(a)}P_{ab} .
     \end{aligned}\]</span></p>
