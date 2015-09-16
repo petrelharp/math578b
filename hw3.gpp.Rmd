@@ -1,0 +1,30 @@
+---
+title: "Math 578B -- Fall 2015 -- Homework #3"
+author: "Peter Ralph"
+date: "due 15 September"
+header-includes:
+    - \usepackage{fullpage}
+---
+
+\newcommand{\calA}{\mathcal{A}}
+\renewcommand{\P}{\mathbb{P}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\given}{\mid}
+\newcommand{\oneb}{\mathbf{1}}
+\newcommand{\cor}{\text{cor}\,}
+
+<!-- wrap solutions in \ifdef{SOLUTIONS} ... \endif -->
+
+```{r knit_setup, include=FALSE}
+fig.dim <- 5
+knitr::opts_chunk$set(fig.height=fig.dim,fig.width=2*fig.dim,fig.align='center')
+```
+
+
+**1.** Let $\Lambda$ be  Poisson point process on $\R$ with intensity $\lambda(x)$;
+and mark each point with an independent label from the distribution $\mu$;
+i.e., take an enumeration of the points $\Lambda=\{x_1,x_2,\ldots\}$,
+and then let $\Lambda' = \{(x_1,U_1),(x_2,U_2),\ldots\}$,
+where $U_1,U_2,\ldots$ are i.i.d. random variables from a probability distribution
+with density $\mu$.
+Show that $\Lambda'$ is a Poisson point process on $\R^2$ with intensity $\lambda(x)\mu(x)$.

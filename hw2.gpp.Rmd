@@ -252,14 +252,14 @@ a.  Sample $n=100$ points uniformly from the unit square $[0,1]^2$,
     and compute $D$ for this configuration.
     Use this $D$ in subsequent problems.
 
-    \ifdef{SOLUTIONS}
-    ```{r tsp_D, cache=TRUE}
-    npts <- 100
-    xy <- data.frame( x=runif(npts), y=runif(npts) )
-    D <- sqrt( outer(xy$x,xy$x,"-")^2 + outer(xy$y,xy$y,"-")^2 )
-    plot(D,asp=1)
-    ```
-    \endif
+\ifdef{SOLUTIONS}
+```{r tsp_D, cache=TRUE}
+npts <- 100
+xy <- data.frame( x=runif(npts), y=runif(npts) )
+D <- sqrt( outer(xy$x,xy$x,"-")^2 + outer(xy$y,xy$y,"-")^2 )
+plot(D,asp=1)
+```
+\endif
 
     
 b.  Implement the Metropolis algorithm to sample from $\pi_T$
