@@ -9,9 +9,11 @@ header-includes:
 \newcommand{\calA}{\mathcal{A}}
 \renewcommand{\P}{\mathbb{P}}
 \newcommand{\E}{\mathbb{E}}
+\newcommand{\R}{\mathbb{R}}
 \newcommand{\given}{\mid}
 \newcommand{\oneb}{\mathbf{1}}
 \newcommand{\cor}{\text{cor}\,}
+\newcommand{\st}{\,:\,}
 
 <!-- wrap solutions in \ifdef{SOLUTIONS} ... \endif -->
 
@@ -28,3 +30,56 @@ and then let $\Lambda' = \{(x_1,U_1),(x_2,U_2),\ldots\}$,
 where $U_1,U_2,\ldots$ are i.i.d. random variables from a probability distribution
 with density $\mu$.
 Show that $\Lambda'$ is a Poisson point process on $\R^2$ with intensity $\lambda(x)\mu(x)$.
+
+**2.** Raindrops fall as a Poisson point process in space ($\R^2$)
+and time ($[0,\infty)$)
+with intensity $\lambda$ drops per cm$^2$ per second.
+Each splatters to an independently, randomly chosen radius,
+with an Exponential(1) distribution.
+What is the probability density of the radius of the first drop to cover the origin?
+Check your answer by simulation.
+
+**3.** Consider the "polymerase complex assembly" chain from the first homework,
+with transition probabilities
+$$\begin{aligned}
+P = 
+\begin{array}{c c}  
+&
+\begin{array}{c c c c c c} 
+    \varnothing & \alpha & \beta & \alpha+\beta & \text{pol} & \dagger \\ 
+\end{array}
+\\
+\begin{array} {c c}
+    \varnothing \\ \alpha \\ \beta \\ \alpha+\beta \\ \text{pol} \\ \dagger 
+\end{array}
+&
+\left[
+\begin{array}{c c c c c c}
+    * & k_\alpha & k_\beta & 0 & 0 & 0 \\
+    k_\alpha & * & 0 & k_\beta &0 & 0 \\
+    k_\beta & 0 & * & k_\alpha & 0 & 0 \\
+    0 & k_\beta & k_\alpha & * & k_\text{pol} & 0 \\
+    0 & 0 & 0 & 0 & * & 1 \\
+    0 & 0 & 0 & 1 & 0 & * 
+\end{array}
+\right]
+\end{array} ,
+\end{aligned}
+$$
+where the "$*$"s on the diagonal are set so that rows sum to 1.
+This time, set $k_\alpha = k_\beta = 2 \times 10^{-6}$,
+$k_\text{pol}=5\times10^{-6}$,
+and $k_\delta=10^{-5}$.
+Suppose that each step of this discrete-time Markov chain takes $10^{-6}$ seconds.
+
+a.  Write down, and explain how to simulate, the continuous-time Markov chain that approximates this chain (work in units of seconds).
+
+b.  Let $Y_t$ denote the continuous-time chain,
+    and define $\tau_\dagger = \inf\{t \ge 0 \st Y_t = \dagger \}$.
+    Derive a system of linear equations solved by the mean hitting times
+    $u(a) := \E[\tau_\dagger\given Y_0=a]$.
+
+c.  Use these to solve for $u$ numerically.
+
+d.  Simulate the continuous-time chain and use this to check your answer to (b).
+
