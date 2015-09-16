@@ -23,7 +23,7 @@ knitr::opts_chunk$set(fig.height=fig.dim,fig.width=2*fig.dim,fig.align='center')
 
 **1.** Let $X_n$ be the simplified "polymerase complex assembly" Markov chain defined in class,
 with transition matrix (where "$\dagger$" means transcription):
-\begin{align}
+$$\begin{aligned}
 P = 
 \begin{array}{c c}  
 &
@@ -46,25 +46,25 @@ P =
 \end{array}
 \right]
 \end{array}
-\end{align}
+\end{aligned}$$
 Here the "$*$"s on the diagonal are set so that rows sum to 1.
 For each state $a$, define
 the first *hitting* times
-\begin{align*}
+$$\begin{aligned}
     \tau_a &= \min\{ n \ge 0 : X_n = a \} 
-\end{align*}
+\end{aligned}$$
 
 a.  Since the factors $\alpha$ and $\beta$ can stay on the DNA,
     there may be more than one transcript per "burst".
     Let $N$ denote the number of transcripts before the next complete disassembly,
     i.e.
-    \begin{align*}
+    $$\begin{aligned}
         N &= \sum_{k=0}^{\tau_\varnothing} \oneb_{X_k = \dagger} .
-    \end{align*}
+    \end{aligned}$$
     Find the set of linear equations solved by
-    \begin{align*}
+    $$\begin{aligned}
         u(a) = \E[ N \given X_0 = a ] .
-    \end{align*}
+    \end{aligned}$$
 
     \ifdef{SOLUTIONS}
     **Solution:**
@@ -72,11 +72,11 @@ a.  Since the factors $\alpha$ and $\beta$ can stay on the DNA,
     Note that $u(\varnothing)=0$.
     By conditioning on $X_1$, if $a \neq \varnothing$,
     and by time-homogeneity and the Markov property,
-    \begin{align*}
+    $$\begin{aligned}
         u(a) &= \E[ N \given X_0 = a ] \\
             &= \delta_\dagger(a) +  \E[ u(X_1) ] \\
             &= \delta_\dagger(a) +  \sum_b P_{ab} u(b) .
-    \end{align*}
+    \end{aligned}$$
     Here $\delta_\dagger(a)=1$ if $a=\dagger$ and is 0 otherwise.
     \normalfont
     \endif
@@ -151,8 +151,7 @@ c.  Verify your answer by simulation.
 **2.** Suppose that $X$ is a Markov chain on a state space $\calA$,
     and that $\varnothing$ and $\dagger$ are two distinct sets of states in $\calA$.
     Define
-    $$
-    \begin{aligned}
+    $$\begin{aligned}
     h(a) = \P^a\{ \tau_\varnothing < \tau_\dagger \} ,
     \end{aligned}
     $$
@@ -238,14 +237,14 @@ without that step, the chain would alternate between the two possible states eac
     so that $D_{ij} = D_{ji}$ is the distance between point $i$ and point $j$.
     The *length* of a given ordering of points $\sigma : \{1,\ldots,n\} \to \{1,\ldots,n\}$
     is
-    \begin{align*}
+    $$\begin{aligned}
         L(\sigma) = \sum_{i=1}^{n-1} D_{\sigma(i),\sigma(i+1)} .
-    \end{align*}
+    \end{aligned}$$
     Note that this is not a *tour*, i.e., it doesn't loop back to the start.
     For a given value of the *temperature* $T > 0$, define
-    \begin{align*}
+    $$\begin{aligned}
         \pi_T(\sigma) = \exp\left( - L(\sigma) / T \right) .
-    \end{align*}
+    \end{aligned}$$
     Write (and, explain) computer code to do the following.
 
 a.  Sample $n=100$ points uniformly from the unit square $[0,1]^2$,
@@ -253,11 +252,11 @@ a.  Sample $n=100$ points uniformly from the unit square $[0,1]^2$,
     Use this $D$ in subsequent problems.
 
 \ifdef{SOLUTIONS}
-```{r tsp_D, cache=TRUE}
+```{r tsp_D, fig.width=fig.dim, cache=TRUE}
 npts <- 100
 xy <- data.frame( x=runif(npts), y=runif(npts) )
 D <- sqrt( outer(xy$x,xy$x,"-")^2 + outer(xy$y,xy$y,"-")^2 )
-plot(D,asp=1)
+plot(xy,asp=1)
 ```
 \endif
 
@@ -313,36 +312,58 @@ Tvals <- c(0.05,10)
 runs <- lapply( Tvals, run_metrop, nsteps=1e5 )
 ```
 
+To see if the chain has run long enough to forget its initial condition,
+we'll look at how the length of a path changes as the chain progresses,
+and look at how the path itself changes.
 
-First, plot $T=`r Tvals[1]`$:
+
+First, for $T=`r Tvals[1]`$:
+Here is the length of the path found:
 ```{r T1, cache=TRUE, depends="runs"}
 which.L <- 1
     plot(runs[[which.L]]$Lvec,ylab="length",xlab="step")
-    # looks stable by 5000
 ```
-```{r T1_2, cache=TRUE, depends="runs"}
+Since we start at a randomly chosen initial state,
+the path length (unsuprisingly) decreases,
+then seems to fluctuate around an equilibrium.
+From this, it looks like the samples from the MCMC are usable past about 10,000 steps.
+We also don't see any long-term correlations in the length.
+But, to see if there chain is sufficiently exploring the space of possibilities,
+let's look at the actual states:
+```{r T1_2, cache=TRUE, depends="T1", fig.height=3*fig.dim, fig.width=3*fig.dim}
     layout(matrix(1:9,nrow=3))
     for (k in seq(1,nrow(runs[[which.L]]$sigma.mat),length.out=10)[-1]) {
         plot( xy$x[runs[[which.L]]$sigma.mat[k,]], xy$y[runs[[which.L]]$sigma.mat[k,]], type='l', 
              xlim=c(0,1), ylim=c(0,1), asp=1, xlab='', ylab='' )
     }
 ```
-```{r T1_3, cache=TRUE, depends="runs"}
+These are nine equally spaced time points;
+the paths look pretty different,
+suggesting that the chain is exploring state space rapidly enough.
+
+Here's a histogram of the total length.
+```{r T1_3, cache=TRUE, depends="T1"}
     hist(runs[[1]]$Lvec[(nrow(runs[[1]]$sigma.mat)/2):nrow(runs[[1]]$sigma.mat)],main=paste("T=",Tvals[1]))
 ```
 
-Now, plot $T=`r Tvals[2]`$:
+Now, we'll do the same for $T=`r Tvals[2]`$:
 ```{r T2, cache=TRUE, depends="runs"}
-which.L <- 1
+which.L <- 2
     plot(runs[[which.L]]$Lvec,ylab="length",xlab="step")
-    # looks stable by 5000
+```
+The length looks stable almost immediately:,
+suggesting that at this value of $T$, the distribution $\pi_T$ is basically uniform.
+Some actual sampled paths support this (but, it's hard to tell):
+```{r T2_2, cache=TRUE, depends="T2", fig.height=3*fig.dim, fig.width=3*fig.dim}
     layout(matrix(1:9,nrow=3))
     for (k in seq(1,nrow(runs[[which.L]]$sigma.mat),length.out=10)[-1]) {
         plot( xy$x[runs[[which.L]]$sigma.mat[k,]], xy$y[runs[[which.L]]$sigma.mat[k,]], type='l', 
              xlim=c(0,1), ylim=c(0,1), asp=1, xlab='', ylab='' )
     }
-    layout(1)
-    hist(runs[[1]]$Lvec[(nrow(runs[[1]]$sigma.mat)/2):nrow(runs[[1]]$sigma.mat)],main=paste("T=",Tvals[1]))
+```
+Finally, here's the length distribution.
+```{r T2_3, cache=TRUE, depends="T2"}
+    hist(runs[[which.L]]$Lvec[(nrow(runs[[which.L]]$sigma.mat)/2):nrow(runs[[which.L]]$sigma.mat)],main=paste("T=",Tvals[which.L]))
 ```
 
 \endif
@@ -354,10 +375,20 @@ c.  For each of the Markov chains at $T=10$ and $T=0.05$,
     Plot, and explain the differences between the two chains you see.
 
 \ifdef{SOLUTIONS}
+There's a handy `R` function for this, `acf()`.
+Here are the plots:
 ```{r plot_acf, cache=TRUE, depends="runs"}
-acf(runs[[1]]$Lvec,lag.max=length(runs[[1]]$Lvec),main=Tvals[1])
-acf(runs[[2]]$Lvec,lag.max=length(runs[[2]]$Lvec),main=Tvals[2])
+acf(runs[[1]]$Lvec,lag.max=length(runs[[1]]$Lvec),main=paste("T=",Tvals[1]))
+acf(runs[[2]]$Lvec,lag.max=length(runs[[2]]$Lvec),main=paste("T=",Tvals[2]))
 ```
+This tells us that path length becomes uncorrelated at $T=`r Tvals[1]`$
+by about 10,000 steps; 
+and at $T=`r Tvals[2]`$ almost immediately,
+as we saw above.
+This makes sense, because at the lower value of $T$,
+there are fewer available moves,
+so the chain moves less frequently,
+and paths remain correlated for longer.
 \endif
 
 <!--
