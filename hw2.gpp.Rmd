@@ -164,7 +164,7 @@ c.  Verify your answer by simulation.
 
 \ifdef{SOLUTIONS}
 **Solution:**
-\it
+
 Recall that $\P^a$ denotes probabilities with $X_0=a$.
 By time-homogeneity,
 $$\begin{aligned}
@@ -192,7 +192,7 @@ $$\begin{aligned}
 &=
 \frac{h(b)P_{ab}}{h(a)} .
 \end{aligned}$$
-\normalfont
+
 \endif
 
 
@@ -209,7 +209,7 @@ $$\begin{aligned}
 
 \ifdef{SOLUTIONS}
 **Solution:**
-\it
+
 We know that if $\pi_a P_{ab} = \pi_b P_{ba}$  for all states $a,b$
 and some vector $\pi$,
 then the chain is reversible,
@@ -229,7 +229,7 @@ The chain is aperiodic because it includes the "do nothing" step:
 to see why this is necessary, consider the chain with $k=1$ and $n=2$:
 without that step, the chain would alternate between the two possible states each step
 (thus being periodic with period 2).
-\normalfont
+
 \endif
 
 **4.** *(soft TSP)*
@@ -271,6 +271,7 @@ b.  Implement the Metropolis algorithm to sample from $\pi_T$
     
 
 \ifdef{SOLUTIONS}
+**Solution:**
 
 Here is the set-up:
 ```{r tsp_metrop}
@@ -375,6 +376,7 @@ c.  For each of the Markov chains at $T=10$ and $T=0.05$,
     Plot, and explain the differences between the two chains you see.
 
 \ifdef{SOLUTIONS}
+**Solution:**
 There's a handy `R` function for this, `acf()`.
 Here are the plots:
 ```{r plot_acf, cache=TRUE, depends="runs"}
