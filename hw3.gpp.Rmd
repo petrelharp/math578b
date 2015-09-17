@@ -59,8 +59,8 @@ P =
     k_\alpha & * & 0 & k_\beta &0 & 0 \\
     k_\beta & 0 & * & k_\alpha & 0 & 0 \\
     0 & k_\beta & k_\alpha & * & k_\text{pol} & 0 \\
-    0 & 0 & 0 & 0 & * & 1 \\
-    0 & 0 & 0 & 1 & 0 & * 
+    0 & 0 & 0 & 0 & * & k_\delta \\
+    0 & 0 & 0 & k_\delta & 0 & * 
 \end{array}
 \right]
 \end{array} ,
