@@ -1,5 +1,5 @@
 ---
-title: "Math 578B -- Fall 2015 -- Take-home midterm"
+title: "Math 578B :: Fall 2015 :: Take-home midterm"
 author: "Peter Ralph"
 date: "due 29 September"
 header-includes:
@@ -20,62 +20,271 @@ fig.dim <- 5
 knitr::opts_chunk$set(fig.height=fig.dim,fig.width=2*fig.dim,fig.align='center')
 ```
 
+**1.** Let $N$ be a Poisson random variable with mean $\lambda$,
+and, given $N$, let $X_1, \ldots, X_N$ be iid random variables in the discrete set $\mathcal{A}$
+with distribution $\pi$.
+For each $1\le k \le N$ let $X_k(t)$ be an independent Markov chain on $\mathcal{A}$ with initial state $X_k(0)=X_k$,
+and suppose that the Markov chain has unique stationary distribution $\pi$.
+Show that for each $t \ge 0$ and each state $x \in \mathcal{A}$,
+that $N_t(a) = \#\{ k : X_k(t) = a \}$ is Poisson distributed with mean $\lambda \pi(a)$.
 
-**1.** 
-Here is a simplified model of a "cut-and-paste" DNA transposon in a bacteria.
+
+\ifdef{SOLUTIONS}
+**Solution:**
+
+By stationarity, $X_k(t) \sim \pi$ for each $k$ and each $t$.
+By Poisson coloring, the result follows.
+
+\endif
+
+
+**2.** Let $S_n$ denote the set of permutations on $n$ elements,
+and for $s \in S_n$ let $c(s)$ denote the number of cycles of $s$.
+To perform a statistical test, it is desired to sample from the distribution
+$$ \pi_\alpha(s) = \frac{ c(s)^\alpha }{ \sum_{u \in S_n} c(u)^\alpha }, $$
+for a parameter $\alpha \ge 0$.
+
+a.  Design a Markov chain whose stationary distribution is $\pi_\alpha$.
+
+\ifdef{SOLUTIONS}
+**Solution:**
+
+Represent a permutation $s$ by $(s(1),\ldots,s(n))$.
+The moves we will use exchanges $s(j)$ and $s(k)$,
+with $j$ and $k$ uniformly chosen.
+It is clear this is symmetric,
+so we need only calculate the Hastings ratio.
+```{r mcmc_perms}
+move <- function (s) {
+    jk <- sample.int(length(s),2,replace=TRUE)
+    s[jk] <- rev(s[jk])
+    return(s)
+}
+cycles <- function (s) {
+    ncycles <- 1
+    now <- 1
+    done <- c(TRUE,rep(FALSE,length(s)-1))
+    while (any(!done)) {
+        now <- s[now]
+        if (done[now]) {
+            ncycles <- ncycles + 1
+            now <- min(which(!done))
+        }
+        done[now] <- TRUE
+    }
+    return(ncycles)
+}
+mcmc <- function (s,nsteps, alpha) {
+    ss <- matrix(0,nrow=length(s),ncol=nsteps)
+    ncycles <- cycles(s)
+    for (k in 1:nsteps) {
+        ss[,k] <- s
+        snew <- move(s)
+        newcycles <- cycles(snew)
+        if (runif(1) <= (newcycles/ncycles)^alpha) {
+            s <- snew
+            ncycles <- newcycles
+        }
+    }
+    return(ss)
+}
+```
+
+\endif
+
+b.  Check that your Markov chain has the correct stationary distribution
+    by implementing it
+    and comparing samples from it after a large number of steps
+    to exact calculations for $\alpha=3$ and $n=2,3,4$.
+
+\ifdef{SOLUTIONS}
+Here are all the possible permutations.
+```{r all_perms, cache=TRUE}
+n <- 4
+alpha <- 3
+perms <- rbind(1:n,permute::allPerms(n)) # allPerms does *not* include the identity for some reason !?!?!
+perm.cycles <- apply(perms,1,cycles)
+perm.probs <- perm.cycles^alpha/sum(perm.cycles^alpha)
+mcrun <- mcmc(sample.int(n),nsteps=100000,alpha=alpha)
+mcrun <- mcmc(mcrun[,ncol(mcrun)],nsteps=100000,alpha=alpha)
+cbind( theory=perm.probs,
+      simulation=table(factor(apply(mcrun,2,paste,collapse=''),levels=apply(perms,1,paste,collapse='')))/ncol(mcrun)
+  )
+```
+**Solution:**
+
+\endif
+
+c.  Use your Markov chain to estimate for $n=100$ and $\alpha=3$
+    the distribution of the number of cycles,
+    as well as
+    $$ \sum_{s \in S_n} \pi(s) c(s) $$
+    and 
+    $$ \sum_{s \in S_n} \pi(s) c(s)^2 .  $$
+    Make sure to justify why you're getting a good estimate.
+
+\ifdef{SOLUTIONS}
+**Solution:**
+
+Here's the chain and the autocorrelation function for the first slot
+```{r est_sums, cache=TRUE}
+n <- 100
+alpha <- 3
+mcrun <- mcmc(sample.int(n),nsteps=1000,alpha=alpha)
+mcrun <- mcmc(mcrun[,ncol(mcrun)],nsteps=10000,alpha=alpha)
+mcrun.cycles <- apply(mcrun,2,cycles)
+plot(acf(mcrun[1,],lag.max=ncol(mcrun)/2))
+plot(acf(mcrun.cycles,lag.max=ncol(mcrun)/2))
+```
+
+Looks good;
+here's the estimates:
+```{r est}
+hist(mcrun.cycles)
+# mean number of cycles
+mean(mcrun.cycles)
+# mean squared number of cycles
+mean(mcrun.cycles^2)
+```
+
+\endif
+
+
+**3.** Here is a simplified model of a "cut-and-paste" DNA transposon.
 The *transposon* is a 3kb segment of DNA that behaves as follows.
-Suppose it is inserted at position $x$ in a single chromsome.
-Each cell replication, with probability $\mu$, it *transposes*:
+Suppose it is inserted at position $x$ in a single chromosome of a diploid.
+Each meiosis, with probability $\mu$, it *transposes*:
 it is removed from location $x$, then inserted at two other locations,
 say, $y$ and $z$, (randomly chosen from the genome).
-Suppose we are studying this transposon in a population that initially has $10^6$ individuals,
-in which each generation, each individual either divides with probability $1/2$, or dies.
-For simplicity, suppose the organism has a single chromosome of length $10^9$
-and that $\mu=0.01$.
+Any insertions present then has probability $1/2$ of being passed on to the chromosome inherited by the offspring.
+Suppose we are studying this transposon in a diploid population of $N$ individuals,
+in which each generation, $N$ random pairs are chosen to mate to produce the next generation.
+For simplicity, suppose the organism has a single chromosome of length $3 \times 10^9$
+and that $\mu=0.05$.
 
-a.  Simulate the process, beginning with a single copy of the transposon at one location. 
-    For efficiency, just keep track of the locations of the transposon insertions,
-    ignoring any potential overlap.
-    Show using your simulations that
-        * the transposon might not spread, but if it does,
-        * the number of copies grow exponentially, but
-        * there are no locations in the genome at which an insertion is common.
+a. Simulate the process, beginning with a single copy of the transposon at one location. 
+   For efficiency, just keep track of the locations of the transposon insertions,
+   ignoring any potential overlap.
+   Show using your simulations with $N=1000$ that
+    * the transposon might not spread,
+    *  but if it does,
+       the number of copies grow exponentially, but
+    * even so, there are very few locations in the genome at which an insertion is common.
 
-\ifdef{SOLUTION}
+\ifdef{SOLUTIONS}
 **Solution:**
 
 ```{r sim_TE}
-mu <- 0.01
+mu <- 0.05
 # individuals are numeric vectors of insert locations
-sim.gen <- function (pop) {
-    if (length(pop)==0) { return(pop) }
-    nkids <- 2*rbinom(length(pop),size=1,prob=1/2)
-    newpop <- pop[rep(seq_along(pop),nkids)]
-    return( 
-        lapply( newpop, function (ind) {
-                jumped <- ( rbinom(length(ind),size=1,prob=mu)>0 )
-                c( ind[!jumped], runif(2*sum(jumped)) )
-            } ) )
+reproduce <- function (ind) {
+    jumped <- ( rbinom(length(ind),size=1,prob=mu)>0 )
+    newind <- c( ind[!jumped], runif(2*sum(jumped)) )
+    return( newind[ rbinom(length(newind),size=1,prob=1/2)>0 ] )
 }
-sim.gens <- function (pop,n) {
+sim.gen <- function (pop,N=length(pop)) {
+    parents <- cbind( mom=sample.int(length(pop),N,replace=TRUE), pop=sample.int(N,length(pop),replace=TRUE))
+    newpop <- vector(mode="list",length=N)
+    for (k in 1:N) {
+        newpop[[k]] <- reproduce( unique(unlist(pop[parents[k,]])) )
+    }
+    return(newpop)
+}
+sim.gens <- function (pop,n,max.copies=Inf,count.copies=FALSE) {
+    if (count.copies) { 
+        counts <- numeric(n)
+        counts[1] <- length(unlist(pop))
+    }
     for (k in 2:n) {
         pop <- sim.gen(pop)
-        if ( (length(pop)>0) || all(sapply(length(pop))==0) ) {
+        n.copies <- length(unlist(pop))
+        if (count.copies) {
+            counts[k] <- n.copies
+        }
+        if ( n.copies==0 || n.copies>max.copies ) {
             break;
         }
     }
+    if (count.copies) { pop <- counts }
+    attr(pop,"gen") <- k
     return(pop)
 }
 ```
 
 First, let's find out the probability that it takes off.
-```{r prob_estab}
-N <- 1e3
+```{r prob_estab, cache=TRUE}
+N <- 1e2
 init.pop <- list( c(0.5), numeric(0) )[c(1,rep(2,N-1))]
 nreps <- 1000
 ngens <- 1000
-many.pops <- replicate( nreps, sim.gens(init.pop,ngens) )
-ninserts <- sapply(lapply(many.pops,sapply,length),tabulate,nbins=length(unique(unlist(many.pops))))
+max.copies <- 100
+many.pops <- replicate( nreps, sim.gens(init.pop,ngens,max.copies=max.copies), simplify=FALSE )
+gens <- sapply( many.pops, attr, "gen" )
+copies <- sapply( lapply(many.pops,unlist), length )
+prob.estab <- mean(copies>0)
 ```
+The probability that it reaches 100 copies is `r prob.estab`;
+the chance it hits zero after this is very small.
+
+Now let's look at a few simulations where it did take off:
+```{r takeoff, cache=TRUE, dependson="prob_estab"}
+usethese <- sample(which(copies>0),6)
+longsims <- sapply( many.pops[usethese], sim.gens, n=200, max.copies=1e5, count.copies=TRUE )
+matplot(longsims,type='l',log='y')
+```
+Yup; that's exponential growth.
+
+Now, let's look at frequency per location.
+```{r site_freq, cache=TRUE}
+N <- 1e3
+while( TRUE ) {
+    longsim <- sim.gens( many.pops[[usethese[1]]], n=200, max.copies=1e5 )
+    if ( length(unlist(longsim))!=0 ) { break }
+}
+site.freqs <- table( unlist(longsim) )
+plot(sort(site.freqs))
+```
+\endif
+
+b.  Explain, mathematically, the observation that the number of copies grows exponentially:
+    Use a branching process model for the *total number* of transposon copies in the population
+    to find the mean number of copies present after $t$ generations.
+
+\ifdef{SOLUTIONS}
+**Solution:**
+
+Consider a transposon copy.
+It is chosen to reproduce a Poisson(2) number of times;
+each time, the number of offspring insertions it leaves behind is either a Binomial(2,1/2) (with probability $\mu$)
+or Binomial(1,1/2) (otherwise).
+The probability that it has $k$ offspring is messy, but the mean number of offspring is $2 \times ( \mu + (1-\mu)/2 ) = 1+2\mu$,
+so the mean total number of copies is $(1+2\mu)^t$.
 
 \endif
+
+c.  Explain, mathematically, the observation that each insertion site is infrequently used in the population.
+    Use a branching process model for the number of transposon copies *at location $x$* in the population
+    and the identity $\P\{X>0\} \le \E[X]$ (for nonnegative $X$)
+    to find an upper bound on the probability that a new insertion at $x$ will persist in the population for at least $t$ generations.
+
+\ifdef{SOLUTIONS}
+**Solution:**
+
+The number of offspring is now Poisson($1-\mu$);
+this has generating function $\phi(u) = \exp((1-\mu)(u-1))$.
+Using the bound, the probability a site lives for $t$ generations is no more than $(1-\mu)^t$.
+
+\endif
+
+d.  Suppose a single transposon with transposition rate $\mu=10^{-2}$ is introduced to a population of $10^7$ individuals.
+    If it spreads, how long do you estimate it will be until 10% of the genome of a typical individual is composed of transposons?
+
+\ifdef{SOLUTIONS}
+**Solution:**
+
+The total number of non-transposon base pairs is $3 \times 10^7 \times 10^9 = 10^{16}$;
+Using *b*, the total number of transposon base pairs is $(1+2\mu)^t \times 3 \times 10^3 = 3 \times 10^{3+2 t \times 10^{-2} /\log(10)}$;
+this equals $3 \times 10^{15}$ at $t=600\log(10)=1382$ generations.
+
+\endif
+
