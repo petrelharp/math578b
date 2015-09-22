@@ -23,8 +23,11 @@ knitr::opts_chunk$set(fig.height=fig.dim,fig.width=2*fig.dim,fig.align='center')
 **1.** Let $N$ be a Poisson random variable with mean $\lambda$,
 and, given $N$, let $X_1, \ldots, X_N$ be iid random variables in the discrete set $\mathcal{A}$
 with distribution $\pi$.
-For each $1\le k \le N$ let $X_k(t)$ be an independent Markov chain on $\mathcal{A}$ with initial state $X_k(0)=X_k$,
-and suppose that the Markov chain has unique stationary distribution $\pi$.
+For each $1\le k \le N$ let $X_k(t)$ be an independent continuous-time Markov chain 
+on $\mathcal{A}$ with initial state $X_k(0)=X_k$,
+and suppose that the Markov chains have transition rate matrix $Q$ with $\sum_a \pi(a) Q_{ab} = 0$ for each $b$.
+(In other words, if the chain is in state $a$, it waits there for an exponential amount of time with mean $-1/Q_{aa}$,
+then jumps to state $b$ with probability $Q_{ab}/(-Q_{aa})$.)
 Show that for each $t \ge 0$ and each state $x \in \mathcal{A}$,
 that $N_t(a) = \#\{ k : X_k(t) = a \}$ is Poisson distributed with mean $\lambda \pi(a)$.
 
@@ -32,6 +35,8 @@ that $N_t(a) = \#\{ k : X_k(t) = a \}$ is Poisson distributed with mean $\lambda
 \ifdef{SOLUTIONS}
 **Solution:**
 
+Here $\pi$ is a stationary distribution for the Markov chain:
+$\pi^t e^{tQ} = \sum_n \pi^t Q^n t^n / n! = \pi^T$.
 By stationarity, $X_k(t) \sim \pi$ for each $k$ and each $t$.
 By Poisson coloring, the result follows.
 
@@ -44,7 +49,7 @@ To perform a statistical test, it is desired to sample from the distribution
 $$ \pi_\alpha(s) = \frac{ c(s)^\alpha }{ \sum_{u \in S_n} c(u)^\alpha }, $$
 for a parameter $\alpha \ge 0$.
 
-a.  Design a Markov chain whose stationary distribution is $\pi_\alpha$.
+a.  Design and implement a Markov chain whose stationary distribution is $\pi_\alpha$.
 
 \ifdef{SOLUTIONS}
 **Solution:**
@@ -156,20 +161,23 @@ Suppose it is inserted at position $x$ in a single chromosome of a diploid.
 Each meiosis, with probability $\mu$, it *transposes*:
 it is removed from location $x$, then inserted at two other locations,
 say, $y$ and $z$, (randomly chosen from the genome).
-Any insertions present then has probability $1/2$ of being passed on to the chromosome inherited by the offspring.
+Any insertions present then each have probability $1/2$ of being passed on to the chromosome inherited by the offspring.
+(So, if the two parental chromosomes have insertions at $n$ locations, 
+the number of insertions inherited by the offspring's chromosome is Binomial($n$,$1/2$):
+this ignores the fact that both parents might have insertions at the same location,
+but we check this assumption below.)
 Suppose we are studying this transposon in a diploid population of $N$ individuals,
 in which each generation, $N$ random pairs are chosen to mate to produce the next generation.
 For simplicity, suppose the organism has a single chromosome of length $3 \times 10^9$
 and that $\mu=0.05$.
 
 a. Simulate the process, beginning with a single copy of the transposon at one location. 
-   For efficiency, just keep track of the locations of the transposon insertions,
-   ignoring any potential overlap.
+   (For efficiency, you might want to just keep track of the locations of the transposon insertions, ignoring any potential overlap of the 3kb segments.)
    Show using your simulations with $N=1000$ that
     * the transposon might not spread,
-    *  but if it does,
-       the number of copies grow exponentially, but
-    * even so, there are very few locations in the genome at which an insertion is common.
+    * but if it does,
+      the number of copies grows exponentially, but
+    * even so, there are very few locations in the genome at which an insertion is common in the population.
 
 \ifdef{SOLUTIONS}
 **Solution:**
@@ -231,6 +239,7 @@ Now let's look at a few simulations where it did take off:
 usethese <- sample(which(copies>0),6)
 longsims <- sapply( many.pops[usethese], sim.gens, n=200, max.copies=1e5, count.copies=TRUE )
 matplot(longsims,type='l',log='y')
+abline(log10(100),log10(1+mu/2),col='grey',lwd=2)
 ```
 Yup; that's exponential growth.
 
@@ -257,8 +266,8 @@ Consider a transposon copy.
 It is chosen to reproduce a Poisson(2) number of times;
 each time, the number of offspring insertions it leaves behind is either a Binomial(2,1/2) (with probability $\mu$)
 or Binomial(1,1/2) (otherwise).
-The probability that it has $k$ offspring is messy, but the mean number of offspring is $2 \times ( \mu + (1-\mu)/2 ) = 1+2\mu$,
-so the mean total number of copies is $(1+2\mu)^t$.
+The probability that it has $k$ offspring is messy, but the mean number of offspring is $2 \times ( \mu + (1-\mu)/2 ) = 1+\mu$,
+so the mean total number of copies is $(1+\mu)^t$.
 
 \endif
 
