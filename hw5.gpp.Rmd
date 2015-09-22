@@ -1,0 +1,81 @@
+---
+title: "Math 578B -- Fall 2015 -- Take-home midterm"
+author: "Peter Ralph"
+date: "due 29 September"
+header-includes:
+    - \usepackage{fullpage}
+---
+
+\newcommand{\calA}{\mathcal{A}}
+\renewcommand{\P}{\mathbb{P}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\given}{\mid}
+\newcommand{\oneb}{\mathbf{1}}
+\newcommand{\cor}{\text{cor}\,}
+
+<!-- wrap solutions in \ifdef{SOLUTIONS} ... \endif -->
+
+```{r knit_setup, include=FALSE}
+fig.dim <- 5
+knitr::opts_chunk$set(fig.height=fig.dim,fig.width=2*fig.dim,fig.align='center')
+```
+
+
+**1.** 
+Here is a simplified model of a "cut-and-paste" DNA transposon in a bacteria.
+The *transposon* is a 3kb segment of DNA that behaves as follows.
+Suppose it is inserted at position $x$ in a single chromsome.
+Each cell replication, with probability $\mu$, it *transposes*:
+it is removed from location $x$, then inserted at two other locations,
+say, $y$ and $z$, (randomly chosen from the genome).
+Suppose we are studying this transposon in a population that initially has $10^6$ individuals,
+in which each generation, each individual either divides with probability $1/2$, or dies.
+For simplicity, suppose the organism has a single chromosome of length $10^9$
+and that $\mu=0.01$.
+
+a.  Simulate the process, beginning with a single copy of the transposon at one location. 
+    For efficiency, just keep track of the locations of the transposon insertions,
+    ignoring any potential overlap.
+    Show using your simulations that
+        * the transposon might not spread, but if it does,
+        * the number of copies grow exponentially, but
+        * there are no locations in the genome at which an insertion is common.
+
+\ifdef{SOLUTION}
+**Solution:**
+
+```{r sim_TE}
+mu <- 0.01
+# individuals are numeric vectors of insert locations
+sim.gen <- function (pop) {
+    if (length(pop)==0) { return(pop) }
+    nkids <- 2*rbinom(length(pop),size=1,prob=1/2)
+    newpop <- pop[rep(seq_along(pop),nkids)]
+    return( 
+        lapply( newpop, function (ind) {
+                jumped <- ( rbinom(length(ind),size=1,prob=mu)>0 )
+                c( ind[!jumped], runif(2*sum(jumped)) )
+            } ) )
+}
+sim.gens <- function (pop,n) {
+    for (k in 2:n) {
+        pop <- sim.gen(pop)
+        if ( (length(pop)>0) || all(sapply(length(pop))==0) ) {
+            break;
+        }
+    }
+    return(pop)
+}
+```
+
+First, let's find out the probability that it takes off.
+```{r prob_estab}
+N <- 1e3
+init.pop <- list( c(0.5), numeric(0) )[c(1,rep(2,N-1))]
+nreps <- 1000
+ngens <- 1000
+many.pops <- replicate( nreps, sim.gens(init.pop,ngens) )
+ninserts <- sapply(lapply(many.pops,sapply,length),tabulate,nbins=length(unique(unlist(many.pops))))
+```
+
+\endif
