@@ -31,6 +31,23 @@ where $U_1,U_2,\ldots$ are i.i.d. random variables from a probability distributi
 with density $\mu$.
 Show that $\Lambda'$ is a Poisson point process on $\R^2$ with intensity $\lambda(x)\mu(x)$.
 
+\ifdef{SOLUTIONS}
+If $\Lambda'$ is a PPP, then it must have intensity $\lambda \mu$.
+Briefly, suppose that $A$ and $B$ are two disjoint subsets of $\R^2$ of the form
+$A = [x,y] \times [a_1,a_2)$ and 
+$B = [x,y] \times [b_1,b_2)$.
+If we color points of $\Lambda$ according to whether their labels fall in $[a_1,a_2)$ or not,
+then we find that the number of points in $A$ is Poisson,
+and independent from the number of points in $B$;
+applying Poisson coloring again shows that the number of points in $B$ is Poisson.
+Now, if $A=[x_1,x_2) \times X$ and $B = [y_1,y_2) \times Y$ where $[x_1,x_2)$ and $[y_1,y_2)$ are disjoint,
+then since $\Lambda$ is Poisson, again applying coloring,
+$A$ and $B$ are each Poisson and independent.
+If $A$ and $B$ are arbitrary disjoint measurable sets, they can be approximated by unions of sets like the above;
+a little more is needed to justify the approximation,
+but Poisson additivity finishes the argument.
+\endif
+
 **2.** Raindrops fall as a Poisson point process in space ($\R^2$)
 and time ($[0,\infty)$)
 with intensity $\lambda$ drops per cm$^2$ per second.
@@ -38,6 +55,82 @@ Each splatters to an independently, randomly chosen radius,
 with an Exponential(1) distribution.
 What is the probability density of the radius of the first drop to cover the origin?
 Check your answer by simulation.
+
+\ifdef{SOLUTIONS}
+**Solution:**
+
+Let $\tau$ be the time to the first drop that hits the origin,
+and $R$ be its radius.
+Let $N(s,t,r)$ be the number of drops hitting the origin between times $s$ and $t$ with radius no more than $r$;
+by Poisson coloring, 
+this is a Poisson process on $[0,\infty)$;
+since the probability a point in radial coordinates $(u,\theta)$ has a radius that allows it to hit the origin but is no greater than $r$ is $e^{-u}-e^{-r}$,
+the intensity is
+$$\begin{aligned}
+\lambda \int_0^{2\pi} \int_0^r (e^{-u}-e^{-r}) u du d\theta
+&=
+2 \pi \lambda  \int_0^r (e^{-u}-e^{-r})u du \\
+&=
+2 \pi \lambda \left( 1 - (1+r+r^2/2)e^{-r} \right)
+\end{aligned}$$
+Then
+$$\begin{aligned}
+\P\{ t \le \tau \le t + \epsilon \,\&\, R \le r \}
+&=
+\P\{ N(0,t,\infty)=0 \,\&\, N(t,t+\epsilon,r)>0 \} \\
+&=
+\P\{ N(0,t,\infty)=0 \} \P\{ N(t+\epsilon,r)>0 \} \\
+&=
+e^{-2\pi\lambda t}
+\left( 1 - \exp\left\{ - 2 \pi \epsilon \lambda \left( 1 - (1+r+r^2/2)e^{-r} \right)\right\} \right)
+\end{aligned}$$
+Taking $\epsilon \to 0$ we get that
+$$\begin{aligned}
+\P\{ \tau \in dt \,\&\, R \le r \}
+&=
+e^{-2\pi\lambda t}
+2 \pi \lambda \left( 1 - (1+r+r^2/2)e^{-r} \right)
+\end{aligned}$$
+Note that this factors into a term dependent on $r$ and a term dependent on $\tau$.
+This implies that $\tau$ and $R$ are *independent*, and that
+$$\begin{aligned}
+\P\{ R \le r \}
+&\propto
+\left( 1 - (1+r+r^2/2)e^{-r} \right) .
+\end{aligned}$$
+Since the above expression goes to 1 as $r \to \infty$, it is actually an equality.
+Differentiating, we find that
+$$\begin{aligned}
+\P\{ R \in dr \}
+&=
+\frac{r^2}{2}  e^{-r} ,
+\end{aligned}$$
+i.e., $R$ is Gamma(3,1).
+
+Now, let's simulate.
+```{r sim_check, fig.width=fig.dim}
+max.x <- 10
+sim_drops <- function (t) {
+    ndrops <- rpois(1,t*(2*max.x)^2)
+    return( data.frame(
+            x = runif(ndrops,-max.x,max.x),
+            y = runif(ndrops,-max.x,max.x),
+            r = rexp(ndrops)
+        ) )
+}
+with( sim_drops(3), {
+        symbols( x, y, circles=r, bg=ifelse(r^2>x^2+y^2,adjustcolor("red",0.25),NA), xlab='', ylab='',inches=FALSE, asp=1 )
+    } )
+```
+Now, a histogram of all the radii overlapping the origin,
+with the Gamma(3,1) distribution overlaid:
+```{r radii}
+drops <- subset( sim_drops(10000), r^2 > x^2 + y^2 )
+xh<-hist(drops$r,breaks=30)
+lines(xh$mids,sum(xh$counts)*diff(pgamma(xh$breaks,shape=3,scale=1)),col='red')
+```
+
+\endif
 
 **3.** Consider the "polymerase complex assembly" chain from the first homework,
 with transition probabilities
