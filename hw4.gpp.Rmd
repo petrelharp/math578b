@@ -32,10 +32,10 @@ a.  What is the probability of there being $n$ bacteria carrying the mutation on
 
     \ifdef{SOLUTIONS}
     **Solution:**
-    \it
+    
     This is well-modeled by a Poisson process,
     so if we let $\nu=\mu\times10^{6}$, this is $e^{-\nu} \nu^n/n!$.
-    \normalfont
+    
     \endif
 
 b.  Suppose that 
@@ -50,7 +50,7 @@ b.  Suppose that
 
     \ifdef{SOLUTIONS}
     **Solution:**
-    \it
+    
     To have grown to 0.01cm in 1 hours = 60 minutes, they must have been growing for
     $\log(10)/\log(1.05)=47.2$ minutes,
     and so have started growing within the first 60-47.2=12.8 minutes.
@@ -59,13 +59,22 @@ b.  Suppose that
     the number of colonies that have done so is Poisson with intensity $\nu \times 0.527$,
     and so the maximum likelihood estimator for $\nu$ is $17/0.527=32.25$,
     and the estimator for $\mu$ is $3.225 \times 10^{-7}$.
-    \normalfont
+    
     \endif
 
 c.  Now suppose that each cell carrying the mutation fails to begin growing,
     and instead dies, with probability $p$.
     Explain why we cannot estimate both $\mu$ and $p$ separately from these data.
 
+\ifdef{SOLUTIONS}
+**Solution:**
+
+The result would be a Poisson point process with intensity $\mu p$:
+since we have no way of obsrving the cells with the mutation that have died,
+and all properties of what we observe depend on the product of $\mu$ and $p$, 
+they are confounded.
+
+\endif
 
 
 **2.** Suppose that a class of deleterious mutations enters a large population of size $N$ at rate $\mu$ per birth:
@@ -87,7 +96,7 @@ a.  Simulate from this process with $N=10^6$, $\mu=10^{-6}$, and $s=0.001$,
 
     \ifdef{SOLUTIONS}
     **Solution:**
-    \it
+    
 
     ```{r sim_bps}
     sim_muts <- function (ngens,offspring,muN=mu*N,mu,N,max.muts=muN*100,z0=0) {
@@ -108,7 +117,7 @@ a.  Simulate from this process with $N=10^6$, $\mu=10^{-6}$, and $s=0.001$,
     plot(colSums(history>0),type='l',main="number of distinct mutants",xlab="generations",ylab="number")
     ```
 
-    \normalfont
+    
     \endif
 
 b.  From the simulation, estimate the distribution of the number of distinct mutations present in the population
@@ -116,14 +125,14 @@ b.  From the simulation, estimate the distribution of the number of distinct mut
 
     \ifdef{SOLUTIONS}
     **Solution:**
-    \it
+   
     Run it for longer this time:
     ```{r longer_run}
     pois.hist <- sim_muts(ngens=100000,offspring=function(z){rpois(length(z),lambda=(1-s)*z)},muN=1,max.muts=200,z0=history[,ncol(history)])
     plot( table( colSums(pois.hist>0) )/ncol(pois.hist), ylab="frequency", xlab="number of mutation types", main="distribution of number of mutation types" )
     hist( apply(pois.hist,2,max), xlab="number of copies in the population", main="distribution of most common mutation", breaks=50 )
     ```
-    \normalfont
+    
     \endif
 
 c.  Modify your simulation so that the offspring number is now Binomial$(2,p)$, with $p$ chosen so the mean number of offspring is $1-s$.
@@ -133,7 +142,7 @@ c.  Modify your simulation so that the offspring number is now Binomial$(2,p)$, 
 
     \ifdef{SOLUTIONS}
     **Solution:**
-    \it
+   
     ```{r sim_bifur}
     # hm, this one needs longer to reach equilibrium
     binom.fn <- function(z){rbinom(length(z),size=2*z,prob=(1-s)/2)}
@@ -158,7 +167,7 @@ c.  Modify your simulation so that the offspring number is now Binomial$(2,p)$, 
         xlab="number of copies in the population", main="distribution of most common mutation"  )
     hist( apply(pois.hist,2,max), breaks=50, col=adjustcolor("black",0.5), freq=FALSE, add=TRUE )
     ```
-    \normalfont
+    
     \endif
 
 
@@ -168,7 +177,7 @@ d.  In class we showed that the mean number of copies present in the population
 
     \ifdef{SOLUTIONS}
     **Solution:**
-    \it
+   
     ```{r hist_totals}
     # plot number of types
     hist( colSums(binom.hist), breaks=50, col=adjustcolor("red",0.5), freq=FALSE, 
@@ -181,7 +190,7 @@ d.  In class we showed that the mean number of copies present in the population
     The mean number of mutations for the Poisson demography is `r mean(colSums(pois.hist))`.
     and for the Binomial demography, the mean is `r mean(colSums(binom.hist))`.
     This is pretty close, we could get standard errors if we account for autocorrelation.
-    \normalfont
+
     \endif
 
 <!--  lifetime estimate
