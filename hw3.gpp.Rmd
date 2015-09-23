@@ -108,7 +108,7 @@ $$\begin{aligned}
 i.e., $R$ is Gamma(3,1).
 
 Now, let's simulate.
-```{r sim_check, fig.width=fig.dim}
+```{r sim_check, fig.width=3*fig.dim, fig.height=3*fig.dim}
 max.x <- 10
 sim_drops <- function (t) {
     ndrops <- rpois(1,t*(2*max.x)^2)
