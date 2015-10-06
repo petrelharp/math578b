@@ -54,11 +54,11 @@ b.  Suppose that
     To have grown to 0.01cm in 1 hours = 60 minutes, they must have been growing for
     $\log(10)/\log(1.05)=47.2$ minutes,
     and so have started growing within the first 60-47.2=12.8 minutes.
-    The chance of this is $\exp(-12.8/20)=0.527$.
+    The chance of this is $1-\exp(-12.8/20)=0.473$.
     By Poisson coloring,
-    the number of colonies that have done so is Poisson with intensity $\nu \times 0.527$,
-    and so the maximum likelihood estimator for $\nu$ is $17/0.527=32.25$,
-    and the estimator for $\mu$ is $3.225 \times 10^{-7}$.
+    the number of colonies that have done so is Poisson with intensity $\nu \times 0.473$,
+    and so the maximum likelihood estimator for $\nu$ is $17/0.473=35.95$,
+    and the estimator for $\mu$ is $3.595 \times 10^{-5}$.
     
     \endif
 
@@ -66,15 +66,23 @@ c.  Now suppose that each cell carrying the mutation fails to begin growing,
     and instead dies, with probability $p$.
     Explain why we cannot estimate both $\mu$ and $p$ separately from these data.
 
-\ifdef{SOLUTIONS}
-**Solution:**
+    \ifdef{SOLUTIONS}
+    **Solution:**
 
-The result would be a Poisson point process with intensity $\mu p$:
-since we have no way of obsrving the cells with the mutation that have died,
-and all properties of what we observe depend on the product of $\mu$ and $p$, 
-they are confounded.
+    The result would be a Poisson point process with intensity $\mu p$:
+    since we have no way of obsrving the cells with the mutation that have died,
+    and all properties of what we observe depend on the product of $\mu$ and $1-p$, 
+    they are confounded.
 
-\endif
+    Concretely, if $\Lambda$ is the configuration of cells that have begun growing,
+    then the distribution of $\Lambda$ depends only on $\mu (1-p)$.
+    Then suppose that $\mu (1-p) = \mu' (1-p')$,
+    and we have observations of cells with parameters either $(\mu,p)$ or $(\mu',p')$.
+    Since any set of measurements about the data have the same likelihood under both sets of parameters,
+    the result of any procedure that guesses which set of parameters was the true set
+    is independent (in the probabilistic sense) of the truth.
+
+    \endif
 
 
 **2.** Suppose that a class of deleterious mutations enters a large population of size $N$ at rate $\mu$ per birth:

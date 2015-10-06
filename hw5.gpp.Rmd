@@ -36,7 +36,7 @@ that $N_t(a) = \#\{ k : X_k(t) = a \}$ is Poisson distributed with mean $\lambda
 **Solution:**
 
 Here $\pi$ is a stationary distribution for the Markov chain:
-$\pi^t e^{tQ} = \sum_n \pi^t Q^n t^n / n! = \pi^T$.
+$\pi^T e^{tQ} = \sum_n \pi^T Q^n t^n / n! = \pi^T$.
 By stationarity, $X_k(t) \sim \pi$ for each $k$ and each $t$.
 By Poisson coloring, the result follows.
 
@@ -142,8 +142,9 @@ plot(acf(mcrun[1,],lag.max=ncol(mcrun)/2))
 plot(acf(mcrun.cycles,lag.max=ncol(mcrun)/2))
 ```
 
-Looks good;
-here's the estimates:
+The correlation decays quickly, so we're getting a good number of independentish samples
+(this could be more quantitative).
+Here are the estimates:
 ```{r est}
 hist(mcrun.cycles)
 # mean number of cycles
@@ -279,8 +280,7 @@ c.  Explain, mathematically, the observation that each insertion site is infrequ
 \ifdef{SOLUTIONS}
 **Solution:**
 
-The number of offspring is now Poisson($1-\mu$);
-this has generating function $\phi(u) = \exp((1-\mu)(u-1))$.
+The number of offspring is now Poisson($1-\mu$).
 Using the bound, the probability a site lives for $t$ generations is no more than $(1-\mu)^t$.
 
 \endif
@@ -291,9 +291,10 @@ d.  Suppose a single transposon with transposition rate $\mu=10^{-2}$ is introdu
 \ifdef{SOLUTIONS}
 **Solution:**
 
-The total number of non-transposon base pairs is $3 \times 10^7 \times 10^9 = 10^{16}$;
-Using *b*, the total number of transposon base pairs is $(1+2\mu)^t \times 3 \times 10^3 = 3 \times 10^{3+2 t \times 10^{-2} /\log(10)}$;
-this equals $3 \times 10^{15}$ at $t=600\log(10)=1382$ generations.
+The total number of non-transposon base pairs is $3 \times 10^9 \times 2 \times 10^7 = 6 \times 10^{16}$;
+Using *b*, the total number of transposon base pairs is $(1+\mu)^t \times 3 \times 10^3$;
+setting this equal to 10% of the total number and taking logarithms, we have that $t = \log( 2 \times 10^{12} )/\log(1+\mu)$,
+or $t=`r log(2e12)/log(1.01)`$ generations.
 
 \endif
 
